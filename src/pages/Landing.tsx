@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
 import AddIcon from '@mui/icons-material/Add';
 import { Box, Button, Fab, Tab, Tabs, TextField } from '@mui/material';
@@ -14,18 +14,19 @@ import DailyView from './DailyView';
 import MonthlyView from './MonthlyView';
 
 function Landing() {
+  const { state } = useLocation();
+
   const [tab, setTab] = useState(0);
   const [selectedDate, setSelectedDate] = useState(() => {
+    if (state?.createdDate) {
+      return new Date(state.createdDate).toISOString().split('T')[0]; // yyyy-mm-dd
+    }
     const today = new Date();
     return today.toISOString().split('T')[0]; // yyyy-mm-dd
   });
   const navigate = useNavigate();
 
-  const {
-    data: productionRecord,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: productionRecord, isLoading } = useQuery({
     queryKey: ['productionRecord', selectedDate],
     queryFn: () => getProductionRecordByDate(selectedDate),
     enabled: !!selectedDate,
@@ -72,11 +73,7 @@ function Landing() {
           </Button>
         </Box>
         {isLoading && <Box textAlign="center">Cargando registro...</Box>}
-        {error && (
-          <Box textAlign="center" color="error.main">
-            Error al cargar el registro
-          </Box>
-        )}
+
         <Tabs
           value={tab}
           onChange={(_, newValue) => setTab(newValue)}

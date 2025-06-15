@@ -25,7 +25,8 @@
     "test:unit": "vitest src",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "emulators": "firebase emulators:start --only firestore"
+    "emulators": "firebase emulators:start --only firestore",
+    "deploy": "pnpm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

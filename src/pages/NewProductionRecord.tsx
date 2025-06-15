@@ -85,7 +85,11 @@ function NewProductionRecord() {
     },
     onSuccess: () => {
       toast.success('Registro de producción guardado exitosamente');
-      navigate('/daily'); // Redirigir a la vista diaria después de guardar
+      navigate('/', {
+        state: {
+          createdDate: fecha,
+        },
+      });
     },
     onError: (error) => {
       if (error instanceof FirebaseError) {
