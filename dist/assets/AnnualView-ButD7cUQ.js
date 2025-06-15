@@ -1,1 +1,0 @@
-import{j as r}from"./deepmerge-CtfbTrfU.js";import{B as n,T as t}from"./App--hkNGEiW.js";import"./index-BxQ4iiw8.js";function i(){return r.jsxs(n,{p:4,children:[r.jsx(t,{variant:"h5",gutterBottom:!0,children:"Resumen de Producción Anual"}),r.jsx(t,{variant:"body1",children:"COMING SOON"})]})}export{i as default};

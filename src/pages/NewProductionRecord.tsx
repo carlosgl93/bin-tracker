@@ -53,7 +53,7 @@ function NewProductionRecord() {
     const today = new Date();
     return today.toISOString().split('T')[0]; // yyyy-mm-dd
   });
-  const [horaInicio, setHoraInicio] = useState('09:20');
+  const [horaInicio, setHoraInicio] = useState('11:30');
   const [horaFin, setHoraFin] = useState('19:00');
   const [gas, setGas] = useState([
     { porcentaje: '', valor: '' },
@@ -74,6 +74,12 @@ function NewProductionRecord() {
     otros: '',
     malos: '',
   });
+  const [brixs, setBrixs] = useState({
+    1: '',
+    2: '',
+    3: '',
+  });
+
   const totalExistencia = (
     ['inicio', 'chechito', 'donluis', 'otros', 'malos'] as (keyof typeof binsEstado)[]
   ).reduce((acc, key) => acc + (binsEstado[key] === '' ? 0 : Number(binsEstado[key])), 0);
@@ -158,6 +164,11 @@ function NewProductionRecord() {
       totalExistence: totalExistencia,
       totalProcessed: totalProcesados,
       totalFinal: totalFinal,
+      brix: {
+        1: brixs[1] === '' ? 0 : Number(brixs[1]),
+        2: brixs[2] === '' ? 0 : Number(brixs[2]),
+        3: brixs[3] === '' ? 0 : Number(brixs[3]),
+      },
     };
     mutation.mutate(data);
   };
@@ -172,7 +183,9 @@ function NewProductionRecord() {
           Ingresa los datos de producción para el día seleccionado
         </Typography>
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-          <Typography variant="subtitle2">Fecha del Registro</Typography>
+          <Typography variant="subtitle2" mb={2}>
+            Fecha del Registro
+          </Typography>
           <TextField
             type="date"
             label="Fecha"
@@ -240,8 +253,8 @@ function NewProductionRecord() {
         </Paper>
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle2">Stock de Tambores</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={4}>
+          <Stack direction={'column'} spacing={2} mt={2}>
+            <Box>
               <TextField
                 label="Stock Inicial"
                 type="number"
@@ -255,8 +268,8 @@ function NewProductionRecord() {
                 size="small"
                 inputProps={{ min: 0 }}
               />
-            </Grid>
-            <Grid item xs={4}>
+            </Box>
+            <Box>
               <TextField
                 label="Tambores Usados"
                 type="number"
@@ -270,8 +283,8 @@ function NewProductionRecord() {
                 size="small"
                 inputProps={{ min: 0 }}
               />
-            </Grid>
-            <Grid item xs={4}>
+            </Box>
+            <Box>
               <TextField
                 label="Total"
                 value={
@@ -282,13 +295,13 @@ function NewProductionRecord() {
                 size="small"
                 InputProps={{ readOnly: true }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Stack>
         </Paper>
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle2">Stock de Bolsas</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={3}>
+          <Stack direction={'column'} spacing={2} mt={2}>
+            <Box>
               <TextField
                 label="Stock Inicial"
                 type="number"
@@ -302,8 +315,8 @@ function NewProductionRecord() {
                 size="small"
                 inputProps={{ min: 0 }}
               />
-            </Grid>
-            <Grid item xs={3}>
+            </Box>
+            <Box>
               <TextField
                 label="Bolsas Usadas"
                 type="number"
@@ -317,8 +330,8 @@ function NewProductionRecord() {
                 size="small"
                 inputProps={{ min: 0 }}
               />
-            </Grid>
-            <Grid item xs={3}>
+            </Box>
+            <Box>
               <TextField
                 label="Bolsas Malas"
                 type="number"
@@ -331,8 +344,8 @@ function NewProductionRecord() {
                 size="small"
                 inputProps={{ min: 0 }}
               />
-            </Grid>
-            <Grid item xs={3}>
+            </Box>
+            <Box>
               <TextField
                 label="Total"
                 value={
@@ -344,12 +357,12 @@ function NewProductionRecord() {
                 size="small"
                 InputProps={{ readOnly: true }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Stack>
         </Paper>
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle2">Estado de Bins</Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} mt={2}>
             {bins.map((b) => (
               <Grid item xs={6} md={2.4} key={b.key}>
                 <TextField
@@ -383,7 +396,7 @@ function NewProductionRecord() {
             </Grid>
           </Grid>
           <Divider sx={{ my: 2 }} />
-          <Grid container spacing={2}>
+          <Stack direction={'column'} spacing={2} mt={2}>
             <Grid item xs={4}>
               <TextField
                 type="number"
@@ -417,7 +430,54 @@ function NewProductionRecord() {
                 InputProps={{ readOnly: true }}
               />
             </Grid>
-          </Grid>
+          </Stack>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle2">Brixs</Typography>
+          <Stack direction={'column'} spacing={2} mt={2}>
+            <Box>
+              <TextField
+                label="1"
+                type="number"
+                value={brixs[1]}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 1: val }));
+                }}
+                fullWidth
+                size="small"
+                inputProps={{ min: 0 }}
+              />
+            </Box>
+            <Box>
+              <TextField
+                label="2"
+                type="number"
+                value={brixs[2]}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 2: val }));
+                }}
+                fullWidth
+                size="small"
+                inputProps={{ min: 0 }}
+              />
+            </Box>
+            <Box>
+              <TextField
+                label="3"
+                type="number"
+                value={brixs[3]}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 3: val }));
+                }}
+                fullWidth
+                size="small"
+                inputProps={{ min: 0 }}
+              />
+            </Box>
+          </Stack>
         </Paper>
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle2">Control de Gas Diario</Typography>

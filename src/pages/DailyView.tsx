@@ -166,50 +166,6 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
         </Grid>
       </Paper>
 
-      {/* Control de Gas Diario */}
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          mb: 3,
-          borderRadius: 2,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-        }}
-      >
-        <Box display="flex" alignItems="center" mb={2}>
-          <GasMeterIcon sx={{ mr: 1 }} color="primary" />
-          <Typography variant="h6">Control de Gas Diario</Typography>
-        </Box>
-
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Día</TableCell>
-                <TableCell align="center">Porcentaje</TableCell>
-                <TableCell align="right">Valor</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {record.gasControl.map((item) => (
-                <TableRow key={item.day}>
-                  <TableCell>{item.day}</TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={`${item.percentage}%`}
-                      size="small"
-                      color={item.percentage > 0 ? 'primary' : 'default'}
-                      variant={item.percentage > 0 ? 'filled' : 'outlined'}
-                    />
-                  </TableCell>
-                  <TableCell align="right">{item.value.toLocaleString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-
       {/* Tambores y Horarios */}
       <Paper
         variant="outlined"
@@ -336,6 +292,38 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             </Stack>
           </Paper>
         </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              height: '100%',
+              borderRadius: 2,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            }}
+          >
+            <Box display="flex" alignItems="center" mb={2}>
+              <InventoryIcon sx={{ mr: 1 }} color="primary" />
+              <Typography variant="h6">Brixs</Typography>
+            </Box>
+
+            <Stack spacing={2}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography>1:</Typography>
+                <Typography fontWeight="bold">{record?.brix?.[1]}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography>2:</Typography>
+                <Typography fontWeight="bold">{record?.brix?.[2]}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography>3:</Typography>
+                <Typography fontWeight="bold">{record?.brix?.[3]}</Typography>
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
       </Grid>
 
       {/* Estado de Bins */}
@@ -398,6 +386,49 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             </Stack>
           </Grid>
         </Grid>
+      </Paper>
+      {/* Control de Gas Diario */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          my: 3,
+          borderRadius: 2,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        }}
+      >
+        <Box display="flex" alignItems="center" my={2}>
+          <GasMeterIcon sx={{ mr: 1 }} color="primary" />
+          <Typography variant="h6">Control de Gas Diario</Typography>
+        </Box>
+
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Día</TableCell>
+                <TableCell align="center">Porcentaje</TableCell>
+                <TableCell align="right">Valor</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {record.gasControl.map((item) => (
+                <TableRow key={item.day}>
+                  <TableCell>{item.day}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={`${item.percentage}%`}
+                      size="small"
+                      color={item.percentage > 0 ? 'primary' : 'default'}
+                      variant={item.percentage > 0 ? 'filled' : 'outlined'}
+                    />
+                  </TableCell>
+                  <TableCell align="right">{item.value.toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
     </Box>
   );

@@ -59,4 +59,9 @@ type ProductionRecord = {
   totalExistence: number;
   totalProcessed: number;
   totalFinal: number;
+  brix: {
+   1: number;
+   2: number;
+   3: number
+  }
 };

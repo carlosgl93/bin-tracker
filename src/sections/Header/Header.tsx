@@ -1,14 +1,13 @@
 import { useNavigate } from 'react-router';
 
-import ThemeIcon from '@mui/icons-material/InvertColors';
 import MenuIcon from '@mui/icons-material/Menu';
-import { AppBar, Button, IconButton, Stack, Toolbar, Tooltip } from '@mui/material';
+import { AppBar, Button, IconButton, Stack, Toolbar } from '@mui/material';
 
 import { useSidebar } from '@/sections/Sidebar/hooks';
 import { useThemeMode } from '@/theme';
 
 function Header() {
-  const { themeMode, toggle: toggleThemeMode } = useThemeMode();
+  const { themeMode } = useThemeMode();
   const { open: openSidebar } = useSidebar();
 
   const router = useNavigate();
@@ -37,7 +36,7 @@ function Header() {
               Bin Tracer
             </Button>
           </Stack>
-          <Stack direction="row" alignItems="center">
+          {/* <Stack direction="row" alignItems="center">
             <Tooltip title="Switch theme" arrow>
               <IconButton
                 color="info"
@@ -49,7 +48,7 @@ function Header() {
                 <ThemeIcon />
               </IconButton>
             </Tooltip>
-          </Stack>
+          </Stack> */}
         </Stack>
       </Toolbar>
     </AppBar>

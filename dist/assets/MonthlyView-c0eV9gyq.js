@@ -1,0 +1,1 @@
+import{j as r}from"./deepmerge-BXAv7Nhj.js";import{B as o,T as t}from"./App-BvifF5Ye.js";import"./index-CMPTEgVS.js";function s(){return r.jsxs(o,{p:4,children:[r.jsx(t,{variant:"h5",gutterBottom:!0,children:"Resumen de Producción Mensual"}),r.jsx(t,{variant:"body1",children:"COMING SOON"})]})}export{s as default};
