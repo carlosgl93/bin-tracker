@@ -1,0 +1,1 @@
+import{j as o}from"./deepmerge-xm9zYRhm.js";import{B as t,T as r}from"./App-BTHfv-zW.js";import"./index-C0H0XfXX.js";function n(){return o.jsxs(t,{p:4,children:[o.jsx(r,{variant:"h5",gutterBottom:!0,children:"Resumen de Producción Mensual"}),o.jsx(r,{variant:"body1",children:"Consulta aquí los datos de producción agregados por mes."})]})}export{n as default};

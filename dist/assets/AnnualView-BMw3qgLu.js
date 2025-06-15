@@ -1,0 +1,1 @@
+import{j as o}from"./deepmerge-xm9zYRhm.js";import{B as a,T as r}from"./App-BTHfv-zW.js";import"./index-C0H0XfXX.js";function s(){return o.jsxs(a,{p:4,children:[o.jsx(r,{variant:"h5",gutterBottom:!0,children:"Resumen de Producción Anual"}),o.jsx(r,{variant:"body1",children:"Consulta aquí los datos de producción agregados por año."})]})}export{s as default};

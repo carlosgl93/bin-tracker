@@ -1,24 +1,17 @@
+import { useNavigate } from 'react-router';
+
 import ThemeIcon from '@mui/icons-material/InvertColors';
 import MenuIcon from '@mui/icons-material/Menu';
 import { AppBar, Button, IconButton, Stack, Toolbar, Tooltip } from '@mui/material';
 
-import { useNotifications } from '@toolpad/core/useNotifications';
-
 import { useSidebar } from '@/sections/Sidebar/hooks';
 import { useThemeMode } from '@/theme';
-
-import { getRandomJoke } from './utils';
 
 function Header() {
   const { themeMode, toggle: toggleThemeMode } = useThemeMode();
   const { open: openSidebar } = useSidebar();
-  const notifications = useNotifications();
 
-  function showNotification() {
-    notifications.show(getRandomJoke(), {
-      autoHideDuration: 5000,
-    });
-  }
+  const router = useNavigate();
 
   return (
     <AppBar
@@ -40,7 +33,7 @@ function Header() {
             >
               <MenuIcon />
             </IconButton>
-            <Button onClick={showNotification} color="info">
+            <Button onClick={() => router('/')} color="info">
               Bin Production Tracker
             </Button>
           </Stack>
