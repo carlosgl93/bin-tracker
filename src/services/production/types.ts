@@ -1,4 +1,5 @@
 export type ProductionRecord = {
+  id?: string;
   date: string;
   startTime: string;
   endTime: string;

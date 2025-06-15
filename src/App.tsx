@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { BrowserRouter } from 'react-router';
+import { ToastContainer } from 'react-toastify';
 
 import { CssBaseline } from '@mui/material';
 
@@ -17,6 +18,7 @@ function App() {
       <CssBaseline />
       <HotKeys />
       <BrowserRouter>
+        <ToastContainer />
         <Header />
         <Sidebar />
         <Pages />

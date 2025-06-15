@@ -19,7 +19,6 @@ const db = getFirestore(app);
 const analytics = getAnalytics(app);
 
 if (import.meta.env.MODE === 'development') {
-  console.log('Connecting to Firestore emulator');
   connectFirestoreEmulator(db, 'localhost', 8080);
 }
 

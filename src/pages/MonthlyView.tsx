@@ -6,9 +6,7 @@ function MonthlyView() {
       <Typography variant="h5" gutterBottom>
         Resumen de Producción Mensual
       </Typography>
-      <Typography variant="body1">
-        Consulta aquí los datos de producción agregados por mes.
-      </Typography>
+      <Typography variant="body1">COMING SOON</Typography>
     </Box>
   );
 }

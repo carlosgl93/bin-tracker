@@ -34,7 +34,7 @@ function Header() {
               <MenuIcon />
             </IconButton>
             <Button onClick={() => router('/')} color="info">
-              Bin Production Tracker
+              Bin Tracer
             </Button>
           </Stack>
           <Stack direction="row" alignItems="center">

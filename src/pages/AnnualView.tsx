@@ -6,9 +6,7 @@ function AnnualView() {
       <Typography variant="h5" gutterBottom>
         Resumen de Producción Anual
       </Typography>
-      <Typography variant="body1">
-        Consulta aquí los datos de producción agregados por año.
-      </Typography>
+      <Typography variant="body1">COMING SOON</Typography>
     </Box>
   );
 }

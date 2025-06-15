@@ -26,7 +26,7 @@ export async function getProductionRecordByDate(date: string) {
   const docRef = doc(db, COLLECTION, date);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
+    return { id: docSnap.id, ...docSnap.data() } as ProductionRecord;
   } else {
     return null;
   }

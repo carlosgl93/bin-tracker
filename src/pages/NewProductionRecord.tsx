@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { toast } from 'react-toastify';
 
 import {
   Box,
@@ -13,6 +15,7 @@ import {
 } from '@mui/material';
 
 import { useMutation } from '@tanstack/react-query';
+import { FirebaseError } from 'firebase/app';
 
 import { createOrUpdateProductionRecordByDate } from '@/services/production/productionRecords';
 import { ProductionRecord } from '@/services/production/types';
@@ -44,6 +47,7 @@ const bins = [
 ];
 
 function NewProductionRecord() {
+  const navigate = useNavigate();
   // Estados para los campos del formulario
   const [fecha, setFecha] = useState(() => {
     const today = new Date();
@@ -60,6 +64,7 @@ function NewProductionRecord() {
   ]);
   const [tambores, setTambores] = useState(Array(10).fill(''));
   const totalTambores = tambores.reduce((a, b) => a + (b === '' ? 0 : Number(b)), 0);
+  const [totalProcesados, setTotalProcesados] = useState(0);
   const [stockTambores, setStockTambores] = useState({ inicial: '', usados: '' });
   const [stockBolsas, setStockBolsas] = useState({ inicial: '', usadas: '', malas: '' });
   const [binsEstado, setBinsEstado] = useState({
@@ -70,14 +75,40 @@ function NewProductionRecord() {
     malos: '',
   });
   const totalExistencia = (
-    ['inicio', 'chechito', 'donluis', 'otros'] as (keyof typeof binsEstado)[]
+    ['inicio', 'chechito', 'donluis', 'otros', 'malos'] as (keyof typeof binsEstado)[]
   ).reduce((acc, key) => acc + (binsEstado[key] === '' ? 0 : Number(binsEstado[key])), 0);
-  const totalProcesados = totalTambores;
-  const totalFinal = 0;
+  const totalFinal = totalExistencia - totalProcesados - Number(binsEstado.malos);
 
   const mutation = useMutation({
     mutationFn: async (data: ProductionRecord) => {
       await createOrUpdateProductionRecordByDate(data.date, data);
+    },
+    onSuccess: () => {
+      toast.success('Registro de producción guardado exitosamente');
+      navigate('/daily'); // Redirigir a la vista diaria después de guardar
+    },
+    onError: (error) => {
+      if (error instanceof FirebaseError) {
+        if (error.code === 'permission-denied') {
+          toast.error('No tienes permisos para guardar registros de producción');
+          return;
+        }
+        if (error.code === 'unavailable') {
+          toast.error('El servicio de Firebase no está disponible. Inténtalo más tarde.');
+          return;
+        }
+        if (error.code === 'not-found') {
+          toast.error('El registro de producción no fue encontrado. Verifica la fecha.');
+          return;
+        }
+        if (error.code === 'invalid-argument') {
+          toast.error('Los datos proporcionados son inválidos. Verifica los campos.');
+          return;
+        }
+      }
+      toast.error(
+        `Error al guardar el registro: ${error instanceof Error ? error.message : 'Desconocido'}`,
+      );
     },
   });
 
@@ -365,7 +396,12 @@ function NewProductionRecord() {
                 value={totalProcesados}
                 fullWidth
                 size="small"
-                InputProps={{ readOnly: true }}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || Number(val) >= 0) {
+                    setTotalProcesados(Number(val));
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={4}>
@@ -398,7 +434,7 @@ function NewProductionRecord() {
                   fullWidth
                   InputProps={{
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                    inputProps: { min: 0 },
+                    inputProps: { min: 0, step: 'any' },
                   }}
                   size="small"
                   sx={{ mb: 1 }}
@@ -416,7 +452,7 @@ function NewProductionRecord() {
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, step: 'any' }}
                 />
               </Grid>
             ))}
