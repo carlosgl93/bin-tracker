@@ -10,8 +10,6 @@ import {
   SwipeableDrawer,
 } from '@mui/material';
 
-import routes from '@/routes';
-
 import { useSidebar } from './hooks';
 
 function Sidebar() {
@@ -28,16 +26,46 @@ function Sidebar() {
       data-pw="sidebar"
     >
       <List sx={{ width: 250, pt: (theme) => `${theme.mixins.toolbar.minHeight}px` }}>
-        {routes
-          .filter((route) => route.title)
-          .map(({ path, title, icon: Icon }) => (
-            <ListItem sx={{ p: 0 }} key={path} onClick={close}>
-              <ListItemButton component={Link} to={path as string}>
-                <ListItemIcon>{Icon ? <Icon /> : <DefaultIcon />}</ListItemIcon>
-                <ListItemText>{title}</ListItemText>
-              </ListItemButton>
-            </ListItem>
-          ))}
+        <ListItem sx={{ p: 0 }} key="home" onClick={close}>
+          <ListItemButton component={Link} to="/">
+            <ListItemIcon>
+              <DefaultIcon />
+            </ListItemIcon>
+            <ListItemText>Home</ListItemText>
+          </ListItemButton>
+        </ListItem>
+        <ListItem sx={{ p: 0 }} key="daily" onClick={close}>
+          <ListItemButton component={Link} to="/daily">
+            <ListItemIcon>
+              <DefaultIcon />
+            </ListItemIcon>
+            <ListItemText>Daily</ListItemText>
+          </ListItemButton>
+        </ListItem>
+        <ListItem sx={{ p: 0 }} key="monthly" onClick={close}>
+          <ListItemButton component={Link} to="/monthly">
+            <ListItemIcon>
+              <DefaultIcon />
+            </ListItemIcon>
+            <ListItemText>Monthly</ListItemText>
+          </ListItemButton>
+        </ListItem>
+        <ListItem sx={{ p: 0 }} key="annual" onClick={close}>
+          <ListItemButton component={Link} to="/annual">
+            <ListItemIcon>
+              <DefaultIcon />
+            </ListItemIcon>
+            <ListItemText>Annual</ListItemText>
+          </ListItemButton>
+        </ListItem>
+        <ListItem sx={{ p: 0 }} key="new-record" onClick={close}>
+          <ListItemButton component={Link} to="/new-record">
+            <ListItemIcon>
+              <DefaultIcon />
+            </ListItemIcon>
+            <ListItemText>New Record</ListItemText>
+          </ListItemButton>
+        </ListItem>
       </List>
     </SwipeableDrawer>
   );

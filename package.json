@@ -31,6 +31,8 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
+    "@mui/system": "^7.1.1",
+    "@mui/utils": "^7.1.1",
     "@toolpad/core": "^0.12.1",
     "jotai": "^2.12.1",
     "react": "^19.0.0",

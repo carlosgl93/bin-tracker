@@ -1,6 +1,7 @@
 import { FullSizeCentered } from '@/components/styled';
 import useOrientation from '@/hooks/useOrientation';
 
+import Landing from '../Landing';
 import muiLogo from './logos/mui.svg';
 import pwaLogo from './logos/pwa.svg';
 import reactLogo from './logos/react_ed.svg';
@@ -19,6 +20,7 @@ function Welcome() {
   return (
     <>
       <meta name="title" content="Welcome" />
+      <Landing />
       <FullSizeCentered flexDirection={isPortrait ? 'column' : 'row'}>
         <Image alt="react-router" src={rrLogo} />
         <Image alt="vite" src={viteLogo} />

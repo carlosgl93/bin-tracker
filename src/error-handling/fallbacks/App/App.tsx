@@ -6,7 +6,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 
 import { FullSizeCentered } from '@/components/styled';
-import { email } from '@/config';
+import { email } from '@/config/index';
 import resetApp from '@/utils/reset-app';
 
 function AppErrorBoundaryFallback() {
