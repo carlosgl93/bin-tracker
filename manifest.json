@@ -1,22 +1,30 @@
 {
-  "name": "BinTracker",
-  "short_name": "BinTracker",
-  "short_description": "Registro de producción de pulpa",
-  "description": "Diario, mensual y anual de producción de pulpa, con estadísticas y gráficos.",
-  "background_color": "#FFFFFF",
-  "theme_color": "#FFFFFF",
+  "theme_color": "#63ADF2",
+  "background_color": "#A7CCED",
   "icons": [
     {
-      "src": "/pwa-192x192.png",
+      "src": "/public/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pwa-512x512.png",
+      "purpose": "any",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "src": "/public/web-app-manifest-512x512.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "/public/apple-touch-icon.png",
+      "type": "image/png"
     }
-  ]
+  ],
+  "lang": "es",
+  "name": "Pulpa",
+  "short_name": "Pulpa",
+  "start_url": "https://bintracer-fd72d.web.app/",
+  "description": "Registro de producción de pulpa",
+  "id": "https://bintracer-fd72d.web.app/"
 }

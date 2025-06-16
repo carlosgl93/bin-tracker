@@ -1,16 +1,16 @@
 {
-  "name": "react-pwa",
+  "name": "pulpa",
   "version": "3.0.0",
   "type": "module",
-  "description": "Starter kit for modern web applications",
-  "homepage": "https://react-pwa.surenatoyan.com/",
+  "description": "Bin Tracker - A PWA for tracking pulp production",
+  "homepage": "https://pulpa.surenatoyan.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/suren-atoyan/react-pwa.git"
+    "url": "https://github.com/suren-atoyan/pulpa.git"
   },
   "bugs": {
-    "url": "https://github.com/suren-atoyan/react-pwa/issues",
-    "email": "contact@surenatoyan.com"
+    "url": "https://github.com/suren-atoyan/pulpa/issues",
+    "email": "cgumucio93@gmail.com"
   },
   "license": "MIT",
   "scripts": {
