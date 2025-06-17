@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ChatIcon from '@mui/icons-material/Chat';
 import GasMeterIcon from '@mui/icons-material/GasMeter';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
@@ -485,6 +486,24 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             </TableBody>
           </Table>
         </TableContainer>
+      </Paper>
+      {/* Comentarios */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        }}
+      >
+        <Box display="flex" alignItems="center" mb={2}>
+          <ChatIcon sx={{ mr: 1 }} color="primary" />
+          <Typography variant="h6">Comentarios</Typography>
+        </Box>
+        <Typography variant="body1" color={record.comments ? 'text.primary' : 'text.secondary'}>
+          {record.comments ? record.comments : 'No hay comentarios para este día.'}
+        </Typography>
       </Paper>
     </Box>
   );

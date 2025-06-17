@@ -99,6 +99,7 @@ function NewProductionRecord() {
       });
     },
     onError: (error) => {
+      console.error('Error al guardar el registro de producción:', error);
       if (error instanceof FirebaseError) {
         if (error.code === 'permission-denied') {
           toast.error('No tienes permisos para guardar registros de producción');
@@ -174,7 +175,7 @@ function NewProductionRecord() {
         3: brixs[3] === '' ? 0 : Number(brixs[3]),
         average: isNaN(brixAverage) ? 0 : brixAverage,
       },
-      comments: comments.trim() || undefined,
+      comments: comments.trim() || '',
     };
     mutation.mutate(data);
   };
