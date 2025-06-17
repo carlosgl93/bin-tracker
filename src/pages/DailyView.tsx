@@ -8,6 +8,7 @@ import WorkIcon from '@mui/icons-material/Work';
 import {
   Box,
   Chip,
+  CircularProgress,
   Divider,
   Grid,
   Paper,
@@ -19,12 +20,11 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-
 import { ProductionRecord } from '@/services/production/types';
+import { formatDate } from '@/utils';
 
 interface DailyViewProps {
   record?: ProductionRecord | null;
@@ -32,18 +32,9 @@ interface DailyViewProps {
   isLoading: boolean;
 }
 
-function formatDate(dateStr: string): string {
-  // Create date from string and handle timezone offset to avoid date shifting
-  if (!dateStr) return '';
-  const [year, month, day] = (dateStr || '').split('-').map(Number);
-  // Month is 0-indexed in JavaScript Date
-  const date = new Date(year, month - 1, day);
-  return format(date, "EEEE, d 'de' MMMM, yyyy", { locale: es });
-}
-
 function DailyView({ record, date, isLoading }: DailyViewProps) {
+  const isMobile = useMediaQuery('(max-width:600px)');
   const formattedDate = useMemo(() => formatDate(date), [date]);
-
   const totalTambores = useMemo(() => {
     if (!record) return 0;
     return record.drumProductionByHour.reduce((sum, hour) => sum + hour.count, 0);
@@ -52,7 +43,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
   if (isLoading) {
     return (
       <Box p={4} textAlign="center">
-        <Typography>Cargando datos de producción...</Typography>
+        <CircularProgress size={50} />
       </Box>
     );
   }
@@ -206,7 +197,8 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
           ))}
         </Grid>
 
-        <Box mt={2} display="flex" justifyContent="flex-end">
+        <Box mt={2} display="flex" justifyContent="space-between" alignItems="center" px={4}>
+          <Typography fontWeight="bold">Kgs: {record.totalDrumsWeight}</Typography>
           <Typography fontWeight="bold">Total: {totalTambores}</Typography>
         </Box>
       </Paper>
@@ -321,6 +313,25 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 <Typography>3:</Typography>
                 <Typography fontWeight="bold">{record?.brix?.[3]}</Typography>
               </Box>
+              <Divider />
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
+              >
+                <Typography>Promedio:</Typography>
+                <Typography fontWeight="bold">
+                  {(() => {
+                    const b1 = Number(record?.brix?.[1]);
+                    const b2 = Number(record?.brix?.[2]);
+                    const b3 = Number(record?.brix?.[3]);
+                    const valid = [b1, b2, b3].filter((v) => !isNaN(v));
+                    if (valid.length === 0) return '-';
+                    return (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(2);
+                  })()}
+                </Typography>
+              </Box>
             </Stack>
           </Paper>
         </Grid>
@@ -339,32 +350,30 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
           <WorkIcon sx={{ mr: 1 }} color="primary" />
           <Typography variant="h6">Estado de Bins</Typography>
         </Box>
-
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Grid container spacing={2}>
-              {record.binsStatus.map((bin) => (
-                <Grid item xs={6} sm={3} key={bin.source}>
-                  <Box display="flex" flexDirection="column" alignItems="center">
-                    <Typography variant="caption" color="text.secondary">
-                      Con Producto {bin.source}:
-                    </Typography>
-                    <Typography variant="h6">{bin.quantity}</Typography>
-                  </Box>
-                </Grid>
-              ))}
-              <Grid item xs={6} sm={3}>
-                <Box display="flex" flexDirection="column" alignItems="center">
-                  <Typography variant="caption" color="text.secondary">
-                    Bins Malos:
-                  </Typography>
-                  <Typography variant="h6">{record.binsMalfunction}</Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
+        {/* Responsive container for Estado de Bins */}
+        {isMobile ? (
+          <Stack spacing={3}>
+            {record.binsStatus.map((bin) => (
+              <Box
+                display="flex"
+                flexDirection="row"
+                justifyContent={'space-between'}
+                alignItems="center"
+                key={bin.source}
+              >
+                <Typography color="text.secondary">{bin.source}:</Typography>
+                <Typography variant="h6">{bin.quantity}</Typography>
+              </Box>
+            ))}
+            <Box
+              display="flex"
+              flexDirection="row"
+              justifyContent={'space-between'}
+              alignItems="center"
+            >
+              <Typography color="text.secondary">Bins Malos:</Typography>
+              <Typography variant="h6">{record.binsMalfunction}</Typography>
+            </Box>
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Total Existencia:</Typography>
@@ -384,8 +393,55 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 <Typography fontWeight="bold">{record.totalFinal}</Typography>
               </Box>
             </Stack>
+          </Stack>
+        ) : (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={2}>
+                {record.binsStatus.map((bin) => (
+                  <Grid item xs={6} sm={3} key={bin.source}>
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                      <Typography variant="caption" color="text.secondary">
+                        {bin.source}:
+                      </Typography>
+                      <Typography variant="h6">{bin.quantity}</Typography>
+                    </Box>
+                  </Grid>
+                ))}
+                <Grid item xs={6} sm={3}>
+                  <Box display="flex" flexDirection="column" alignItems="center">
+                    <Typography variant="caption" color="text.secondary">
+                      Bins Malos:
+                    </Typography>
+                    <Typography variant="h6">{record.binsMalfunction}</Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Stack spacing={2}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography>Total Existencia:</Typography>
+                  <Typography fontWeight="bold">{record.totalExistence}</Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography>Total Procesados:</Typography>
+                  <Typography fontWeight="bold">{record.totalProcessed}</Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
+                >
+                  <Typography>Total Final Proceso:</Typography>
+                  <Typography fontWeight="bold">{record.totalFinal}</Typography>
+                </Box>
+              </Stack>
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Paper>
       {/* Control de Gas Diario */}
       <Paper

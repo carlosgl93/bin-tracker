@@ -3,7 +3,7 @@
   "background_color": "#A7CCED",
   "icons": [
     {
-      "src": "/public/web-app-manifest-192x192.png",
+      "src": "/public/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
@@ -11,7 +11,7 @@
     {
       "purpose": "any",
       "sizes": "512x512",
-      "src": "/public/web-app-manifest-512x512.png",
+      "src": "/public/android-chrome-512x512.png",
       "type": "image/png"
     },
     {

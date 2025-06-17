@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Fab, Tab, Tabs, TextField } from '@mui/material';
+import { Box, Button, CircularProgress, Fab, Tab, Tabs, TextField } from '@mui/material';
 
 import { useQuery } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
@@ -72,7 +72,11 @@ function Landing() {
             Mañana
           </Button>
         </Box>
-        {isLoading && <Box textAlign="center">Cargando registro...</Box>}
+        {isLoading && (
+          <Box textAlign="center">
+            <CircularProgress size={50} />
+          </Box>
+        )}
 
         <Tabs
           value={tab}

@@ -13,7 +13,7 @@ export default defineConfig({
       manifest,
       includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png', 'sw.js'],
       // switch to "true" to enable sw on development
-      devOptions: { enabled: true },
+      devOptions: { enabled: false },
       registerType: 'autoUpdate',
       workbox: { globPatterns: ['**/*.{js,css,html}', '**/*.{svg,png,jpg,gif}'] },
     }),

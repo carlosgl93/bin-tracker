@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 
-import DefaultIcon from '@mui/icons-material/Deblur';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import HomeIcon from '@mui/icons-material/Home';
 import {
   List,
   ListItem,
@@ -29,41 +30,41 @@ function Sidebar() {
         <ListItem sx={{ p: 0 }} key="home" onClick={close}>
           <ListItemButton component={Link} to="/">
             <ListItemIcon>
-              <DefaultIcon />
+              <HomeIcon />
             </ListItemIcon>
-            <ListItemText>Home</ListItemText>
+            <ListItemText>Inicio</ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem sx={{ p: 0 }} key="daily" onClick={close}>
           <ListItemButton component={Link} to="/daily">
             <ListItemIcon>
-              <DefaultIcon />
+              <ChevronRightIcon />
             </ListItemIcon>
-            <ListItemText>Daily</ListItemText>
+            <ListItemText>Diario</ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem sx={{ p: 0 }} key="monthly" onClick={close}>
           <ListItemButton component={Link} to="/monthly">
             <ListItemIcon>
-              <DefaultIcon />
+              <ChevronRightIcon />
             </ListItemIcon>
-            <ListItemText>Monthly</ListItemText>
+            <ListItemText>Mensual</ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem sx={{ p: 0 }} key="annual" onClick={close}>
           <ListItemButton component={Link} to="/annual">
             <ListItemIcon>
-              <DefaultIcon />
+              <ChevronRightIcon />
             </ListItemIcon>
-            <ListItemText>Annual</ListItemText>
+            <ListItemText>Anual</ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem sx={{ p: 0 }} key="new-record" onClick={close}>
           <ListItemButton component={Link} to="/new-record">
             <ListItemIcon>
-              <DefaultIcon />
+              <ChevronRightIcon />
             </ListItemIcon>
-            <ListItemText>New Record</ListItemText>
+            <ListItemText>Nuevo registro</ListItemText>
           </ListItemButton>
         </ListItem>
       </List>

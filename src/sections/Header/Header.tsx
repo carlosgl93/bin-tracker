@@ -32,8 +32,12 @@ function Header() {
             >
               <MenuIcon />
             </IconButton>
-            <Button onClick={() => router('/')} color="info">
-              Bin Tracer
+            <Button onClick={() => router('/')} color="info" sx={{ minWidth: 0, p: 0 }}>
+              <img
+                src="/app-logo.png"
+                alt="App Logo"
+                style={{ height: 40, width: 'auto', display: 'block' }}
+              />
             </Button>
           </Stack>
           {/* <Stack direction="row" alignItems="center">

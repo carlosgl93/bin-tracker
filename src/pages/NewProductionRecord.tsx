@@ -79,11 +79,12 @@ function NewProductionRecord() {
     2: '',
     3: '',
   });
+  const [comments, setComments] = useState('');
 
   const totalExistencia = (
-    ['inicio', 'chechito', 'donluis', 'otros', 'malos'] as (keyof typeof binsEstado)[]
+    ['inicio', 'chechito', 'donluis', 'otros'] as (keyof typeof binsEstado)[]
   ).reduce((acc, key) => acc + (binsEstado[key] === '' ? 0 : Number(binsEstado[key])), 0);
-  const totalFinal = totalExistencia - totalProcesados - Number(binsEstado.malos);
+  const totalFinal = totalExistencia - totalProcesados;
 
   const mutation = useMutation({
     mutationFn: async (data: ProductionRecord) => {
@@ -124,6 +125,8 @@ function NewProductionRecord() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const brixAverage = (Number(brixs[1]) + Number(brixs[2]) + Number(brixs[3])) / 3;
+
     const data: ProductionRecord = {
       date: fecha,
       startTime: horaInicio,
@@ -137,6 +140,7 @@ function NewProductionRecord() {
         range,
         count: tambores[i] === '' ? 0 : Number(tambores[i]),
       })),
+      totalDrumsWeight: totalTambores * 240,
       drumStock: {
         initial: stockTambores.inicial === '' ? 0 : Number(stockTambores.inicial),
         used: stockTambores.usados === '' ? 0 : Number(stockTambores.usados),
@@ -168,7 +172,9 @@ function NewProductionRecord() {
         1: brixs[1] === '' ? 0 : Number(brixs[1]),
         2: brixs[2] === '' ? 0 : Number(brixs[2]),
         3: brixs[3] === '' ? 0 : Number(brixs[3]),
+        average: isNaN(brixAverage) ? 0 : brixAverage,
       },
+      comments: comments.trim() || undefined,
     };
     mutation.mutate(data);
   };
@@ -362,9 +368,9 @@ function NewProductionRecord() {
         </Paper>
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle2">Estado de Bins</Typography>
-          <Grid container spacing={2} mt={2}>
+          <Stack direction={'column'} gap={2} mt={2}>
             {bins.map((b) => (
-              <Grid item xs={6} md={2.4} key={b.key}>
+              <Box key={b.key}>
                 <TextField
                   label={b.label}
                   type="number"
@@ -378,9 +384,9 @@ function NewProductionRecord() {
                   size="small"
                   inputProps={{ min: 0 }}
                 />
-              </Grid>
+              </Box>
             ))}
-            <Grid item xs={6} md={2.4}>
+            <Box>
               <TextField
                 label="Bins Malos"
                 type="number"
@@ -393,8 +399,8 @@ function NewProductionRecord() {
                 size="small"
                 inputProps={{ min: 0 }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Stack>
           <Divider sx={{ my: 2 }} />
           <Stack direction={'column'} spacing={2} mt={2}>
             <Grid item xs={4}>
@@ -522,8 +528,22 @@ function NewProductionRecord() {
             ))}
           </Grid>
         </Paper>
+        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle2">Comentarios</Typography>
+          <TextField
+            label="Comentarios"
+            multiline
+            minRows={3}
+            maxRows={6}
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            fullWidth
+            size="small"
+            placeholder="Agrega cualquier comentario adicional aquí..."
+          />
+        </Paper>
         <Box display="flex" justifyContent="space-between" mt={3}>
-          <Button variant="outlined" color="secondary" href="/daily">
+          <Button variant="outlined" color="secondary" href="/">
             Cancelar
           </Button>
           <Button variant="contained" color="primary" type="submit">
