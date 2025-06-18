@@ -32,7 +32,14 @@ function Landing() {
     enabled: !!selectedDate,
   });
 
-  const handleCreate = () => navigate('/new-record');
+  const handleCreate = () => {
+    navigate('/new-record', {
+      state: {
+        productionRecord: productionRecord ? productionRecord : undefined,
+        date: selectedDate,
+      },
+    });
+  };
 
   const goToPreviousDay = () => {
     const currentDate = new Date(selectedDate);

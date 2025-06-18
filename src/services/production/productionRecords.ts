@@ -23,6 +23,7 @@ export async function createOrUpdateProductionRecordByDate(date: string, data: P
 }
 
 export async function getProductionRecordByDate(date: string) {
+  console.log(`Fetching production record for date: ${date}`);
   const docRef = doc(db, COLLECTION, date);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {

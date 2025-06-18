@@ -35,7 +35,7 @@ function Sidebar() {
             <ListItemText>Inicio</ListItemText>
           </ListItemButton>
         </ListItem>
-        <ListItem sx={{ p: 0 }} key="daily" onClick={close}>
+        {/* <ListItem sx={{ p: 0 }} key="daily" onClick={close}>
           <ListItemButton component={Link} to="/daily">
             <ListItemIcon>
               <ChevronRightIcon />
@@ -58,7 +58,7 @@ function Sidebar() {
             </ListItemIcon>
             <ListItemText>Anual</ListItemText>
           </ListItemButton>
-        </ListItem>
+        </ListItem> */}
         <ListItem sx={{ p: 0 }} key="new-record" onClick={close}>
           <ListItemButton component={Link} to="/new-record">
             <ListItemIcon>
