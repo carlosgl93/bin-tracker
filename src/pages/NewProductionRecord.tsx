@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 
@@ -14,10 +14,13 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { FirebaseError } from 'firebase/app';
 
-import { createOrUpdateProductionRecordByDate } from '@/services/production/productionRecords';
+import {
+  createOrUpdateProductionRecordByDate,
+  getProductionRecordByDate,
+} from '@/services/production/productionRecords';
 import { ProductionRecord } from '@/services/production/types';
 
 const dias = [
@@ -123,6 +126,53 @@ function NewProductionRecord() {
       );
     },
   });
+
+  // Fetch existing record for the selected date
+  const { data: existingRecord } = useQuery({
+    queryKey: ['productionRecord', fecha],
+    queryFn: () => getProductionRecordByDate(fecha),
+    enabled: !!fecha,
+  });
+
+  // Populate form fields if existingRecord changes
+  useEffect(() => {
+    if (existingRecord) {
+      setHoraInicio(existingRecord.startTime || '');
+      setHoraFin(existingRecord.endTime || '');
+      setGas(
+        dias.map((dia, i) => ({
+          porcentaje: existingRecord.gasControl?.[i]?.percentage?.toString() ?? '',
+          valor: existingRecord.gasControl?.[i]?.value?.toString() ?? '',
+        })),
+      );
+      setTambores(
+        horas.map((h, i) => existingRecord.drumProductionByHour?.[i]?.count?.toString() ?? ''),
+      );
+      setStockTambores({
+        inicial: existingRecord.drumStock?.initial?.toString() ?? '',
+        usados: existingRecord.drumStock?.used?.toString() ?? '',
+      });
+      setStockBolsas({
+        inicial: existingRecord.bagStock?.initial?.toString() ?? '',
+        usadas: existingRecord.bagStock?.used?.toString() ?? '',
+        malas: existingRecord.bagStock?.damaged?.toString() ?? '',
+      });
+      setBinsEstado({
+        inicio: existingRecord.binsStatus?.[0]?.quantity?.toString() ?? '',
+        chechito: existingRecord.binsStatus?.[1]?.quantity?.toString() ?? '',
+        donluis: existingRecord.binsStatus?.[2]?.quantity?.toString() ?? '',
+        otros: existingRecord.binsStatus?.[3]?.quantity?.toString() ?? '',
+        malos: existingRecord.binsMalfunction?.toString() ?? '',
+      });
+      setTotalProcesados(existingRecord.totalProcessed ?? 0);
+      setBrixs({
+        1: existingRecord.brix?.[1]?.toString() ?? '',
+        2: existingRecord.brix?.[2]?.toString() ?? '',
+        3: existingRecord.brix?.[3]?.toString() ?? '',
+      });
+      setComments(existingRecord.comments ?? '');
+    }
+  }, [existingRecord]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
