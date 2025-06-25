@@ -58,27 +58,29 @@ function Landing() {
   return (
     <Box p={4} position="relative">
       <Box>
-        <Box display="flex" justifyContent="center" alignItems="center" gap={2} mb={2}>
-          <Button size="small" variant="outlined" onClick={goToPreviousDay} disabled={isLoading}>
-            Ayer
-          </Button>
-          <TextField
-            type="date"
-            label="Seleccionar fecha"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={goToNextDay}
-            disabled={isLoading || addDays(new Date(selectedDate), 1) > new Date()}
-          >
-            Mañana
-          </Button>
-        </Box>
+        {tab === 0 && (
+          <Box display="flex" justifyContent="center" alignItems="center" gap={2} mb={2}>
+            <Button size="small" variant="outlined" onClick={goToPreviousDay} disabled={isLoading}>
+              Ayer
+            </Button>
+            <TextField
+              type="date"
+              label="Seleccionar fecha"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={goToNextDay}
+              disabled={isLoading || addDays(new Date(selectedDate), 1) > new Date()}
+            >
+              Mañana
+            </Button>
+          </Box>
+        )}
         {isLoading && (
           <Box textAlign="center">
             <CircularProgress size={50} />

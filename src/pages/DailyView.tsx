@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 
 import { ProductionRecord } from '@/services/production/types';
-import { formatDate } from '@/utils';
+import { formatDate, formatNumberES } from '@/utils';
 
 interface DailyViewProps {
   record?: ProductionRecord | null;
@@ -101,7 +101,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 borderRadius: 1,
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="body1" color="text.secondary">
                 Fecha
               </Typography>
               <Typography variant="subtitle1" align="center">
@@ -124,7 +124,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 borderRadius: 1,
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="body1" color="text.secondary">
                 Hora de Inicio
               </Typography>
               <Typography variant="subtitle1" align="center">
@@ -147,7 +147,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 borderRadius: 1,
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="body1" color="text.secondary">
                 Hora de Término
               </Typography>
               <Typography variant="subtitle1" align="center">
@@ -187,7 +187,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                   borderRadius: 1,
                 }}
               >
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body1" color="text.secondary">
                   {hour.range}
                 </Typography>
                 <Typography variant="h6" fontWeight="bold">
@@ -199,8 +199,8 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
         </Grid>
 
         <Box mt={2} display="flex" justifyContent="space-between" alignItems="center" px={4}>
-          <Typography fontWeight="bold">Kgs: {record.totalDrumsWeight}</Typography>
-          <Typography fontWeight="bold">Total: {totalTambores}</Typography>
+          <Typography fontWeight="bold">Kgs: {formatNumberES(record.totalDrumsWeight)}</Typography>
+          <Typography fontWeight="bold">Total: {formatNumberES(totalTambores)}</Typography>
         </Box>
       </Paper>
 
@@ -224,11 +224,13 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Stock Inicial:</Typography>
-                <Typography fontWeight="bold">{record.drumStock.initial}</Typography>
+                <Typography fontWeight="bold">
+                  {formatNumberES(record.drumStock.initial)}
+                </Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Tambores Usados:</Typography>
-                <Typography fontWeight="bold">{record.drumStock.used}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.drumStock.used)}</Typography>
               </Box>
               <Divider />
               <Box
@@ -238,7 +240,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
               >
                 <Typography>Total:</Typography>
-                <Typography fontWeight="bold">{record.drumStock.total}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.drumStock.total)}</Typography>
               </Box>
             </Stack>
           </Paper>
@@ -262,15 +264,15 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Stock Inicial:</Typography>
-                <Typography fontWeight="bold">{record.bagStock.initial}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.bagStock.initial)}</Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Bolsas Usadas:</Typography>
-                <Typography fontWeight="bold">{record.bagStock.used}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.bagStock.used)}</Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Bolsas Malas:</Typography>
-                <Typography fontWeight="bold">{record.bagStock.damaged}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.bagStock.damaged)}</Typography>
               </Box>
               <Divider />
               <Box
@@ -280,7 +282,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
               >
                 <Typography>Total:</Typography>
-                <Typography fontWeight="bold">{record.bagStock.total}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.bagStock.total)}</Typography>
               </Box>
             </Stack>
           </Paper>
@@ -304,15 +306,15 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>1:</Typography>
-                <Typography fontWeight="bold">{record?.brix?.[1]}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record?.brix?.[1])}</Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>2:</Typography>
-                <Typography fontWeight="bold">{record?.brix?.[2]}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record?.brix?.[2])}</Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>3:</Typography>
-                <Typography fontWeight="bold">{record?.brix?.[3]}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record?.brix?.[3])}</Typography>
               </Box>
               <Divider />
               <Box
@@ -378,11 +380,11 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Total Existencia:</Typography>
-                <Typography fontWeight="bold">{record.totalExistence}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Total Procesados:</Typography>
-                <Typography fontWeight="bold">{record.totalProcessed}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
               </Box>
               <Box
                 display="flex"
@@ -391,7 +393,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
               >
                 <Typography>Total Final Proceso:</Typography>
-                <Typography fontWeight="bold">{record.totalFinal}</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
               </Box>
             </Stack>
           </Stack>
@@ -402,7 +404,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 {record.binsStatus.map((bin) => (
                   <Grid item xs={6} sm={3} key={bin.source}>
                     <Box display="flex" flexDirection="column" alignItems="center">
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="body1" color="text.secondary">
                         {bin.source}:
                       </Typography>
                       <Typography variant="h6">{bin.quantity}</Typography>
@@ -411,7 +413,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 ))}
                 <Grid item xs={6} sm={3}>
                   <Box display="flex" flexDirection="column" alignItems="center">
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="body1" color="text.secondary">
                       Bins Malos:
                     </Typography>
                     <Typography variant="h6">{record.binsMalfunction}</Typography>
@@ -424,11 +426,11 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
               <Stack spacing={2}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography>Total Existencia:</Typography>
-                  <Typography fontWeight="bold">{record.totalExistence}</Typography>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography>Total Procesados:</Typography>
-                  <Typography fontWeight="bold">{record.totalProcessed}</Typography>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
                 </Box>
                 <Box
                   display="flex"
@@ -437,7 +439,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                   sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
                 >
                   <Typography>Total Final Proceso:</Typography>
-                  <Typography fontWeight="bold">{record.totalFinal}</Typography>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
                 </Box>
               </Stack>
             </Grid>

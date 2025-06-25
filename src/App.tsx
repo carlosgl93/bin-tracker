@@ -3,6 +3,10 @@ import { BrowserRouter } from 'react-router';
 import { ToastContainer } from 'react-toastify';
 
 import { CssBaseline } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+
+import { es } from 'date-fns/locale/es';
 
 import { withErrorHandler } from '@/error-handling';
 import AppErrorBoundaryFallback from '@/error-handling/fallbacks/App';
@@ -18,10 +22,12 @@ function App() {
       <CssBaseline />
       <HotKeys />
       <BrowserRouter>
-        <ToastContainer />
-        <Header />
-        <Sidebar />
-        <Pages />
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+          <ToastContainer />
+          <Header />
+          <Sidebar />
+          <Pages />
+        </LocalizationProvider>
       </BrowserRouter>
     </Fragment>
   );

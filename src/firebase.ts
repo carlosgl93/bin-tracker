@@ -19,7 +19,7 @@ const db = getFirestore(app);
 const analytics = getAnalytics(app);
 
 if (import.meta.env.MODE === 'development') {
-  connectFirestoreEmulator(db, 'localhost', 8080);
+  connectFirestoreEmulator(db, 'localhost', 8081);
 }
 
 export { app, db, analytics };

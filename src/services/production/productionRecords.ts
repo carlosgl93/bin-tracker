@@ -23,7 +23,6 @@ export async function createOrUpdateProductionRecordByDate(date: string, data: P
 }
 
 export async function getProductionRecordByDate(date: string) {
-  console.log(`Fetching production record for date: ${date}`);
   const docRef = doc(db, COLLECTION, date);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
@@ -33,9 +32,9 @@ export async function getProductionRecordByDate(date: string) {
   }
 }
 
-export async function getAllProductionRecords() {
+export async function getAllProductionRecords(): Promise<ProductionRecord[]> {
   const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(collection(db, COLLECTION));
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ProductionRecord);
 }
 
 export async function updateProductionRecordByDate(date: string, data: ProductionRecord) {
@@ -46,4 +45,12 @@ export async function updateProductionRecordByDate(date: string, data: Productio
 export async function deleteProductionRecordByDate(date: string) {
   const docRef = doc(db, COLLECTION, date);
   await deleteDoc(docRef);
+}
+
+export async function getProductionRecordsByMonth(month: string): Promise<ProductionRecord[]> {
+  // month format: 'YYYY-MM'
+  const allRecords = await getAllProductionRecords();
+  return allRecords.filter(
+    (rec: ProductionRecord) => typeof rec.date === 'string' && rec.date.startsWith(month),
+  );
 }

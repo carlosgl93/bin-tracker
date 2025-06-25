@@ -736,10 +736,12 @@ function NewProductionRecord() {
                     type="number"
                     value={gas[i].porcentaje}
                     onChange={(e) => {
-                      const v = [...gas];
                       const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) v[i].porcentaje = val;
-                      setGas(v);
+                      if (val === '' || Number(val) >= 0) {
+                        setGas(
+                          gas.map((item, idx) => (idx === i ? { ...item, porcentaje: val } : item)),
+                        );
+                      }
                     }}
                     fullWidth
                     InputProps={{
@@ -755,10 +757,12 @@ function NewProductionRecord() {
                     type="number"
                     value={gas[i].valor}
                     onChange={(e) => {
-                      const v = [...gas];
                       const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) v[i].valor = val;
-                      setGas(v);
+                      if (val === '' || Number(val) >= 0) {
+                        setGas(
+                          gas.map((item, idx) => (idx === i ? { ...item, valor: val } : item)),
+                        );
+                      }
                     }}
                     fullWidth
                     size="small"
