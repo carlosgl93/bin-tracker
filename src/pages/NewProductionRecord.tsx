@@ -22,12 +22,7 @@ import {
   createOrUpdateProductionRecordByDate,
   getProductionRecordByDate,
 } from '@/services/production/productionRecords';
-import {
-  BinKey,
-  DrumProductionByHour,
-  GasControl,
-  ProductionRecord,
-} from '@/services/production/types';
+import { BinKey, ProductionRecord } from '@/services/production/types';
 
 const dias = [
   { label: 'Lunes', key: 'lunes' },
@@ -64,14 +59,15 @@ function getInitialFormState(record?: ProductionRecord) {
     fecha: record.date,
     horaInicio: record.startTime || '',
     horaFin: record.endTime || '',
-    gas:
-      record.gasControl?.map((g: GasControl) => ({
-        porcentaje: g.percentage?.toString() ?? '',
-        valor: g.value?.toString() ?? '',
-      })) || [],
-    tambores:
-      record.drumProductionByHour?.map((d: DrumProductionByHour) => d.count?.toString() ?? '') ||
-      [],
+    gas: Array(5)
+      .fill(null)
+      .map((_, i) => ({
+        porcentaje: record.gasControl?.[i]?.percentage?.toString() ?? '',
+        valor: record.gasControl?.[i]?.value?.toString() ?? '',
+      })),
+    tambores: Array(10)
+      .fill(null)
+      .map((_, i) => record.drumProductionByHour?.[i]?.count?.toString() ?? ''),
     stockTambores: {
       inicial: record.drumStock?.initial?.toString() ?? '',
       usados: record.drumStock?.used?.toString() ?? '',
@@ -169,6 +165,14 @@ function getEmptyFormState(date: string) {
   };
 }
 
+// Helper to convert Chilean decimal format (comma) to JavaScript decimal format (period)
+function parseChileanDecimal(value: string): number {
+  if (value === '') return 0;
+  // Replace comma with period for JavaScript number parsing
+  const normalizedValue = value.replace(',', '.');
+  return Number(normalizedValue);
+}
+
 function NewProductionRecord() {
   const navigate = useNavigate();
   const {
@@ -216,7 +220,11 @@ function NewProductionRecord() {
   const totalExistencia = (
     ['inicio', 'chechito', 'donluis', 'otros'] as (keyof typeof binsEstado)[]
   ).reduce((acc, key) => Number(acc) + (binsEstado[key] === '' ? 0 : Number(binsEstado[key])), 0);
-  const totalFinal = Number(totalExistencia) - totalProcesados;
+
+  // Subtract bad bins from total existence
+  const adjustedTotalExistencia =
+    Number(totalExistencia) - (binsEstado.malos === '' ? 0 : Number(binsEstado.malos));
+  const totalFinal = adjustedTotalExistencia - totalProcesados;
 
   const mutation = useMutation({
     mutationFn: async (data: ProductionRecord) => {
@@ -340,7 +348,11 @@ function NewProductionRecord() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const brixAverage = (Number(brixs[1]) + Number(brixs[2]) + Number(brixs[3])) / 3;
+    const brixAverage =
+      (parseChileanDecimal(brixs[1]) +
+        parseChileanDecimal(brixs[2]) +
+        parseChileanDecimal(brixs[3])) /
+      3;
 
     const data: ProductionRecord = {
       date: fecha,
@@ -380,13 +392,13 @@ function NewProductionRecord() {
             : Number(binsEstado[b.key as keyof typeof binsEstado]),
       })),
       binsMalfunction: binsEstado.malos === '' ? 0 : Number(binsEstado.malos),
-      totalExistence: Number(totalExistencia),
+      totalExistence: adjustedTotalExistencia,
       totalProcessed: totalProcesados,
       totalFinal: totalFinal,
       brix: {
-        1: brixs[1] === '' ? 0 : Number(brixs[1]),
-        2: brixs[2] === '' ? 0 : Number(brixs[2]),
-        3: brixs[3] === '' ? 0 : Number(brixs[3]),
+        1: parseChileanDecimal(brixs[1]),
+        2: parseChileanDecimal(brixs[2]),
+        3: parseChileanDecimal(brixs[3]),
         average: isNaN(brixAverage) ? 0 : brixAverage,
       },
       comments: comments.trim() || '',
@@ -638,9 +650,9 @@ function NewProductionRecord() {
                   value={
                     ['inicio', 'chechito', 'donluis', 'otros'].every(
                       (key) => binsEstado[key] === '',
-                    )
+                    ) && binsEstado.malos === ''
                       ? ''
-                      : totalExistencia
+                      : adjustedTotalExistencia
                   }
                   fullWidth
                   size="small"
@@ -684,43 +696,55 @@ function NewProductionRecord() {
               <Box>
                 <TextField
                   label="1"
-                  type="number"
+                  type="text"
                   value={brixs[1]}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 1: val }));
+                    // Allow empty string, numbers, commas, and periods
+                    // eslint-disable-next-line no-useless-escape
+                    if (val === '' || /^[\d,\.]*$/.test(val)) {
+                      setBrixs((b) => ({ ...b, 1: val }));
+                    }
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  placeholder="Ej: 14,2"
                 />
               </Box>
               <Box>
                 <TextField
                   label="2"
-                  type="number"
+                  type="text"
                   value={brixs[2]}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 2: val }));
+                    // Allow empty string, numbers, commas, and periods
+                    // eslint-disable-next-line no-useless-escape
+                    if (val === '' || /^[\d,\.]*$/.test(val)) {
+                      setBrixs((b) => ({ ...b, 2: val }));
+                    }
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  placeholder="Ej: 14,2"
                 />
               </Box>
               <Box>
                 <TextField
                   label="3"
-                  type="number"
+                  type="text"
                   value={brixs[3]}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 3: val }));
+                    // Allow empty string, numbers, commas, and periods
+                    // eslint-disable-next-line no-useless-escape
+                    if (val === '' || /^[\d,\.]*$/.test(val)) {
+                      setBrixs((b) => ({ ...b, 3: val }));
+                    }
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  placeholder="Ej: 14,2"
                 />
               </Box>
             </Stack>

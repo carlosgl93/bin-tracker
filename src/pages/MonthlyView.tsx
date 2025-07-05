@@ -12,7 +12,6 @@ import {
   calculateMonthlyGasConsumption,
   groupRecordsByWeek,
   sumDrums,
-  sumStock,
 } from '@/utils/monthlyHelper';
 
 function MonthlyView() {
@@ -38,20 +37,58 @@ function MonthlyView() {
     });
   }, [monthString]);
 
-  const weeks = useMemo(() => (records ? groupRecordsByWeek(records) : {}), [records]);
-  const totalFinalDrumStock = useMemo(
-    () => (records ? sumStock(records, 'drumStock', 'final') : 0),
-    [records],
-  );
-  const totalFinalBagStock = useMemo(
-    () => (records ? sumStock(records, 'bagStock', 'final') : 0),
-    [records],
-  );
+  const weeks = useMemo(() => {
+    if (!records) return {};
+    // Pass the target month and year to filter records properly
+    const targetMonth = month.getMonth(); // 0-based
+    const targetYear = month.getFullYear();
+    return groupRecordsByWeek(records, targetMonth, targetYear);
+  }, [records, month]);
 
-  const totalMonthlyGasConsumption = useMemo(
-    () => (records ? calculateMonthlyGasConsumption(records) : 0),
-    [records],
-  );
+  // Calculate monthly totals from records in the selected month only
+  const monthlyTotalDrums = useMemo(() => {
+    if (!records) return 0;
+    // Filter records to only include those from the selected month
+    const targetMonth = month.getMonth(); // 0-based
+    const targetYear = month.getFullYear();
+    const monthlyRecords = records.filter((rec) => {
+      const recordDate = new Date(rec.date);
+      return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
+    });
+    return sumDrums(monthlyRecords);
+  }, [records, month]);
+
+  const monthlyTotalKgs = useMemo(() => {
+    return monthlyTotalDrums * 240; // Convert drums to kg
+  }, [monthlyTotalDrums]);
+
+  const totalMonthlyGasConsumption = useMemo(() => {
+    if (!records) return 0;
+    // Filter records to only include those from the selected month
+    const targetMonth = month.getMonth(); // 0-based
+    const targetYear = month.getFullYear();
+    const monthlyRecords = records.filter((rec) => {
+      const recordDate = new Date(rec.date);
+      return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
+    });
+    return calculateMonthlyGasConsumption(monthlyRecords);
+  }, [records, month]);
+
+  // Find the last record for the month (by date) from the selected month only
+  const lastRecord = useMemo(() => {
+    if (!records || records.length === 0) return null;
+    // Filter records to only include those from the selected month
+    const targetMonth = month.getMonth(); // 0-based
+    const targetYear = month.getFullYear();
+    const monthlyRecords = records.filter((rec) => {
+      const recordDate = new Date(rec.date);
+      return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
+    });
+    if (monthlyRecords.length === 0) return null;
+    return [...monthlyRecords].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+  }, [records, month]);
+  const lastDrumStockTotal = lastRecord?.drumStock?.total ?? 0;
+  const lastBagStockTotal = lastRecord?.bagStock?.total ?? 0;
 
   return (
     <Box p={2}>
@@ -86,12 +123,16 @@ function MonthlyView() {
             <Typography variant="body1">No hay registros para este mes.</Typography>
           ) : (
             Object.entries(weeks).map(([week, weekRecords]) => {
-              const drums = sumDrums(weekRecords);
-              const kgs = drums * 240;
-              const drumStock = sumStock(weekRecords, 'drumStock', 'final');
-              const bagStock = sumStock(weekRecords, 'bagStock', 'final');
-              // Use the last record's gasControl value for the week (usually Friday)
+              const weekTotalProducedDrumbs = sumDrums(weekRecords);
+              const weekTotalProducedKgs = weekTotalProducedDrumbs * 240;
+              // const drumStock = sumStock(weekRecords, 'drumStock', 'final');
               const lastRecord = weekRecords[weekRecords.length - 1];
+              const finalWeeklyDrumStock =
+                weekRecords.length > 0 && lastRecord.drumStock ? lastRecord.drumStock.total : 0;
+              // const bagStock = sumStock(weekRecords, 'bagStock', 'final');
+              const totalFinalBagStock =
+                weekRecords.length > 0 && lastRecord.bagStock ? lastRecord.bagStock.total : 0;
+              // Use the last record's gasControl value for the week (usually Friday)
               const gas =
                 lastRecord && lastRecord.gasControl && lastRecord.gasControl.length > 0
                   ? lastRecord.gasControl[0].value
@@ -113,10 +154,13 @@ function MonthlyView() {
                         sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}
                       >
                         <Typography variant="body1" color="text.secondary">
-                          Tambores
+                          Tambores producidos
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Suma de los tambores producidos
                         </Typography>
                         <Typography variant="h6" align="center">
-                          {drums}
+                          {weekTotalProducedDrumbs}
                         </Typography>
                       </Paper>
                       <Paper
@@ -124,10 +168,13 @@ function MonthlyView() {
                         sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}
                       >
                         <Typography variant="body1" color="text.secondary">
-                          Kgs
+                          Kgs producidos
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Tambores {weekTotalProducedDrumbs} * 240
                         </Typography>
                         <Typography variant="h6" align="center">
-                          {formatNumberES(kgs)}
+                          {formatNumberES(weekTotalProducedKgs)}
                         </Typography>
                       </Paper>
                       <Paper
@@ -137,8 +184,11 @@ function MonthlyView() {
                         <Typography variant="body1" color="text.secondary">
                           Stock Tambores
                         </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Cantidad para el siguiente lunes
+                        </Typography>
                         <Typography variant="h6" align="center">
-                          {drumStock}
+                          {finalWeeklyDrumStock}
                         </Typography>
                       </Paper>
                       <Paper
@@ -148,8 +198,11 @@ function MonthlyView() {
                         <Typography variant="body1" color="text.secondary">
                           Stock Bolsas
                         </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Cantidad para el siguiente lunes
+                        </Typography>
                         <Typography variant="h6" align="center">
-                          {bagStock}
+                          {totalFinalBagStock}
                         </Typography>
                       </Paper>
                       <Paper
@@ -181,34 +234,66 @@ function MonthlyView() {
         </Box>
         {/* Vertical flow using Stack */}
         <Stack spacing={2}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography>Stock Final de Tambores:</Typography>
-            <Typography fontWeight="bold">{formatNumberES(totalFinalDrumStock)}</Typography>
-          </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography>Stock Final de Bolsas:</Typography>
-            <Typography fontWeight="bold">{formatNumberES(totalFinalBagStock)}</Typography>
-          </Box>
-          <Box
-            display="flex"
-            flexDirection={'column'}
-            justifyContent="space-between"
-            alignItems="left"
-          >
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography>Total Gas (valor):</Typography>
-
-              <Typography fontWeight="bold">
-                {formatNumberES(totalMonthlyGasConsumption)}
-              </Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography>Total Gas (%):</Typography>
-              <Typography fontWeight="bold">
-                {formatNumberES((totalMonthlyGasConsumption / 6000) * 100)}%
-              </Typography>
-            </Box>
-          </Box>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Tambores producidos
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total de tambores producidos en el mes
+            </Typography>
+            <Typography variant="h6" align="center">
+              {monthlyTotalDrums}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Kg
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total de kg producidos en el mes
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(monthlyTotalKgs)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Stock tambores
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Último número ingresado
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(lastDrumStockTotal)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Stock bolsas
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Último número ingresado
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(lastBagStockTotal)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Gas (valor)
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(totalMonthlyGasConsumption)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Gas (%)
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES((totalMonthlyGasConsumption / 6000) * 100)}%
+            </Typography>
+          </Paper>
         </Stack>
       </Paper>
     </Box>

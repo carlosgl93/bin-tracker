@@ -1,19 +1,48 @@
-import { getWeek, startOfMonth } from 'date-fns';
+import { getDate } from 'date-fns';
 
 import { ProductionRecord } from '@/services/production/types';
 
 function getWeekOfMonthISO(dateString: string) {
   const date = new Date(dateString);
-  return getWeek(date) - getWeek(startOfMonth(date)) + 1;
+  const dayOfMonth = getDate(date);
+
+  // Simple week calculation based on day of month
+  // Week 1: days 1-7, Week 2: days 8-14, Week 3: days 15-21, Week 4: days 22-28
+  // Days 29+ will be considered part of week 4 (no week 5)
+  if (dayOfMonth <= 7) return 1;
+  if (dayOfMonth <= 14) return 2;
+  if (dayOfMonth <= 21) return 3;
+  return 4; // Days 22+ are all week 4
 }
 
-function groupRecordsByWeek(records: ProductionRecord[]) {
+function groupRecordsByWeek(
+  records: ProductionRecord[],
+  targetMonth?: number,
+  targetYear?: number,
+) {
   const weeks: Record<number, ProductionRecord[]> = {};
+
   records.forEach((rec) => {
+    const date = new Date(rec.date);
+    const recordMonth = date.getMonth(); // 0-based (0 = January, 6 = July)
+    const recordYear = date.getFullYear();
+
+    // If target month/year are specified, only include records from that month
+    if (targetMonth !== undefined && targetYear !== undefined) {
+      if (recordMonth !== targetMonth || recordYear !== targetYear) {
+        console.log(
+          `Skipping record from different month: ${rec.date} (month: ${recordMonth + 1}, year: ${recordYear})`,
+        );
+        return; // Skip this record
+      }
+    }
+
     const week = getWeekOfMonthISO(rec.date);
+
     if (!weeks[week]) weeks[week] = [];
     weeks[week].push(rec);
   });
+
   return weeks;
 }
 
