@@ -54,3 +54,48 @@ export async function getProductionRecordsByMonth(month: string): Promise<Produc
     (rec: ProductionRecord) => typeof rec.date === 'string' && rec.date.startsWith(month),
   );
 }
+
+/**
+ * Fetches production records for a monthly view, including any previous month days
+ * that belong to the first week of the target month
+ */
+export async function getProductionRecordsForMonthlyView(
+  month: string,
+): Promise<ProductionRecord[]> {
+  // month format: 'YYYY-MM'
+  const [year, monthStr] = month.split('-').map(Number);
+
+  // Get current month records
+  const currentMonthRecords = await getProductionRecordsByMonth(month);
+
+  // Get previous month records
+  const prevMonth = monthStr === 1 ? 12 : monthStr - 1;
+  const prevYear = monthStr === 1 ? year - 1 : year;
+  const prevMonthString = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+  const prevMonthRecords = await getProductionRecordsByMonth(prevMonthString);
+
+  // Determine which previous month days should be included in the target month's first week
+  const firstDayOfTargetMonth = new Date(year, monthStr - 1, 1);
+  const firstDayWeekday = firstDayOfTargetMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+  // If the first day is not Monday (1), we need to include previous month days
+  const relevantPrevMonthRecords: ProductionRecord[] = [];
+
+  if (firstDayWeekday > 1) {
+    // First day is Tuesday or later
+    const daysBack = firstDayWeekday - 1; // How many days back to Monday
+    const mondayOfFirstWeek = new Date(year, monthStr - 1, 1 - daysBack);
+
+    // Filter previous month records that fall in the first week of target month
+    relevantPrevMonthRecords.push(
+      ...prevMonthRecords.filter((rec) => {
+        const [recYear, recMonth, recDay] = rec.date.split('-').map(Number);
+        const recordDate = new Date(recYear, recMonth - 1, recDay);
+        return recordDate >= mondayOfFirstWeek && recordDate < firstDayOfTargetMonth;
+      }),
+    );
+  }
+
+  // Combine and return all relevant records
+  return [...relevantPrevMonthRecords, ...currentMonthRecords];
+}

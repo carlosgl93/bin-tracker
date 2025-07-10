@@ -5,11 +5,11 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import { Box, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 
-import { getProductionRecordsByMonth } from '@/services/production/productionRecords';
+import { getProductionRecordsForMonthlyView } from '@/services/production/productionRecords';
 import { ProductionRecord } from '@/services/production/types';
 import { formatNumberES } from '@/utils/formatNumberES';
 import {
-  calculateMonthlyGasConsumption,
+  calculateBusinessMonthlyTotals,
   groupRecordsByWeek,
   sumDrums,
 } from '@/utils/monthlyHelper';
@@ -31,7 +31,7 @@ function MonthlyView() {
 
   useEffect(() => {
     setIsLoading(true);
-    getProductionRecordsByMonth(monthString).then((data) => {
+    getProductionRecordsForMonthlyView(monthString).then((data) => {
       setRecords(data);
       setIsLoading(false);
     });
@@ -45,48 +45,18 @@ function MonthlyView() {
     return groupRecordsByWeek(records, targetMonth, targetYear);
   }, [records, month]);
 
-  // Calculate monthly totals from records in the selected month only
-  const monthlyTotalDrums = useMemo(() => {
-    if (!records) return 0;
-    // Filter records to only include those from the selected month
+  // Calculate monthly totals using business week logic (includes previous month overflow)
+  const businessMonthlyTotals = useMemo(() => {
+    if (!records) return { totalDrums: 0, totalKgs: 0, totalGasConsumption: 0, lastRecord: null };
     const targetMonth = month.getMonth(); // 0-based
     const targetYear = month.getFullYear();
-    const monthlyRecords = records.filter((rec) => {
-      const recordDate = new Date(rec.date);
-      return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
-    });
-    return sumDrums(monthlyRecords);
+    return calculateBusinessMonthlyTotals(records, targetMonth, targetYear);
   }, [records, month]);
 
-  const monthlyTotalKgs = useMemo(() => {
-    return monthlyTotalDrums * 240; // Convert drums to kg
-  }, [monthlyTotalDrums]);
-
-  const totalMonthlyGasConsumption = useMemo(() => {
-    if (!records) return 0;
-    // Filter records to only include those from the selected month
-    const targetMonth = month.getMonth(); // 0-based
-    const targetYear = month.getFullYear();
-    const monthlyRecords = records.filter((rec) => {
-      const recordDate = new Date(rec.date);
-      return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
-    });
-    return calculateMonthlyGasConsumption(monthlyRecords);
-  }, [records, month]);
-
-  // Find the last record for the month (by date) from the selected month only
-  const lastRecord = useMemo(() => {
-    if (!records || records.length === 0) return null;
-    // Filter records to only include those from the selected month
-    const targetMonth = month.getMonth(); // 0-based
-    const targetYear = month.getFullYear();
-    const monthlyRecords = records.filter((rec) => {
-      const recordDate = new Date(rec.date);
-      return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
-    });
-    if (monthlyRecords.length === 0) return null;
-    return [...monthlyRecords].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
-  }, [records, month]);
+  const monthlyTotalDrums = businessMonthlyTotals.totalDrums;
+  const monthlyTotalKgs = businessMonthlyTotals.totalKgs;
+  const totalMonthlyGasConsumption = businessMonthlyTotals.totalGasConsumption;
+  const lastRecord = businessMonthlyTotals.lastRecord;
   const lastDrumStockTotal = lastRecord?.drumStock?.total ?? 0;
   const lastBagStockTotal = lastRecord?.bagStock?.total ?? 0;
 
