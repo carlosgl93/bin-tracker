@@ -42,6 +42,7 @@ function MonthlyView() {
     // Pass the target month and year to filter records properly
     const targetMonth = month.getMonth(); // 0-based
     const targetYear = month.getFullYear();
+    console.log({ records, targetMonth, targetYear });
     return groupRecordsByWeek(records, targetMonth, targetYear);
   }, [records, month]);
 

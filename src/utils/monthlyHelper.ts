@@ -3,6 +3,7 @@ import {
   getDate,
   isSameMonth,
   isSameYear,
+  nextMonday,
   parseISO,
   startOfWeek,
 } from 'date-fns';
@@ -37,10 +38,13 @@ function groupRecordsByWeek(
   if (targetMonth !== undefined && targetYear !== undefined) {
     // Business week logic using date-fns for reliability
     const targetMonthStart = new Date(targetYear, targetMonth, 1);
-
     // Find the Monday that starts the first business week of the month
     // This is the anchor for all week calculations
-    const firstBusinessMonday = startOfWeek(targetMonthStart, { weekStartsOn: 1 });
+    let firstBusinessMonday;
+    firstBusinessMonday = startOfWeek(targetMonthStart, { weekStartsOn: 0 });
+    if (firstBusinessMonday.getDate() >= 26) {
+      firstBusinessMonday = nextMonday(firstBusinessMonday);
+    }
 
     sortedRecords.forEach((rec) => {
       // Parse date with timezone consistency - always use noon to avoid DST issues
