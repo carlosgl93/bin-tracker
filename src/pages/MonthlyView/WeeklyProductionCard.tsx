@@ -1,0 +1,197 @@
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
+
+import { format, isValid, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+import { ProductionRecord } from '@/services/production/types';
+import { formatNumberES } from '@/utils';
+
+export function WeeklyProductionCard(
+  week: string,
+  dateRange: string,
+  weekTotalProducedDrumbs: number,
+  weekTotalProducedKgs: number,
+  finalWeeklyDrumStock: number,
+  totalFinalBagStock: number,
+  gas: number,
+  daysWithProduction: number,
+  weekRecords: ProductionRecord[],
+  currentWeekInfo: {
+    weekNumber: number;
+    weekStart: string;
+    weekEnd: string;
+    businessDaysInTargetMonth: string[];
+    hasData: boolean;
+  },
+) {
+  console.log({ week, dateRange });
+
+  // Create day indicators with tooltips
+  const dayIndicators = currentWeekInfo.businessDaysInTargetMonth
+    .map((dayId) => {
+      // dayId is in "yyyy-MM-dd" format, directly match with record.id
+      const record = weekRecords.find((r) => r.id === dayId);
+      const hasProduction = !!record;
+
+      // Parse the ISO date for display
+      const dayDate = parseISO(dayId);
+      if (!isValid(dayDate)) {
+        return null;
+      }
+
+      const dayLabel = format(dayDate, 'dd', { locale: es });
+
+      const tooltipContent =
+        hasProduction && record ? (
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              {format(dayDate, 'dd MMM', { locale: es })}
+            </Typography>
+            <Typography variant="caption">
+              Tambores:{' '}
+              {record.totalFinal ||
+                record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) ||
+                0}
+            </Typography>
+            <br />
+            <Typography variant="caption">
+              Kgs:{' '}
+              {formatNumberES(
+                (record.totalFinal ||
+                  record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) ||
+                  0) * 240,
+              )}
+            </Typography>
+            <br />
+            <Typography variant="caption">
+              Stock tambores: {record.drumStock?.total || 0}
+            </Typography>
+            <br />
+            <Typography variant="caption">Stock bolsas: {record.bagStock?.total || 0}</Typography>
+            <br />
+            <table>
+              <tbody>
+                {Object.entries(record.brix).map(([b, i]) => (
+                  <tr key={i}>
+                    <td>{b === 'average' ? `Promedio: ${i.toFixed(2)}` : `${b}: ${i}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* <Typography variant="caption">Brixs: {record.brix.}</Typography> */}
+            <br />
+            <Typography variant="caption">
+              Gas: {record.gasControl?.reduce((sum, g) => sum + (g.value || 0), 0) || 0}
+            </Typography>
+          </Box>
+        ) : (
+          <Typography variant="body2">
+            {format(dayDate, 'dd MMM', { locale: es })} - Sin producción
+          </Typography>
+        );
+
+      return (
+        <Tooltip key={dayId} title={tooltipContent} arrow>
+          <Chip
+            label={dayLabel}
+            size="small"
+            sx={{
+              backgroundColor: hasProduction ? '#4caf50' : '#f44336',
+              color: 'white',
+              minWidth: '32px',
+              height: '24px',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: hasProduction ? '#45a049' : '#d32f2f',
+              },
+            }}
+          />
+        </Tooltip>
+      );
+    })
+    .filter(Boolean);
+  return (
+    <Box key={week} mb={4}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          width: '100%',
+        }}
+      >
+        <Box display="flex" alignItems="center" mb={2} sx={{ width: '100%' }}>
+          <CalendarMonthIcon sx={{ mr: 1 }} color="primary" />
+          <Typography variant="h6" sx={{ mr: 2 }}>
+            Semana {week}
+          </Typography>
+        </Box>
+        {/* Vertical flow using Stack */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 0.5, mx: 2 }}>{dayIndicators}</Box>
+          <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
+            {daysWithProduction} días con producción
+          </Typography>
+        </Box>
+        <Stack spacing={2}>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Tambores producidos
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Suma de los tambores producidos
+            </Typography>
+            <Typography variant="h6" align="center">
+              {weekTotalProducedDrumbs}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Kgs producidos
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Tambores {weekTotalProducedDrumbs} * 240
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(weekTotalProducedKgs)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Stock Tambores
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Cantidad para el siguiente lunes
+            </Typography>
+            <Typography variant="h6" align="center">
+              {finalWeeklyDrumStock}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Stock Bolsas
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Cantidad para el siguiente lunes
+            </Typography>
+            <Typography variant="h6" align="center">
+              {totalFinalBagStock}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Gas (valor)
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(gas)}
+            </Typography>
+          </Paper>
+        </Stack>
+      </Paper>
+    </Box>
+  );
+}

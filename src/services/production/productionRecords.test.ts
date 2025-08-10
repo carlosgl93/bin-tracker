@@ -74,8 +74,8 @@ describe('getProductionRecordsForMonthlyView', () => {
     expect(records).toHaveLength(6);
   });
 
-  it('should not include previous month days when target month starts on Monday', async () => {
-    // Mock data for a month that starts on Monday
+  it('should include adjacent month records but filter correctly in groupRecordsByWeek', async () => {
+    // Mock data for a month that starts on Sunday
     const mockGetDocs = await import('firebase/firestore');
     vi.mocked(mockGetDocs.getDocs).mockResolvedValue({
       docs: [
@@ -91,9 +91,10 @@ describe('getProductionRecordsForMonthlyView', () => {
 
     const records = await getProductionRecordsForMonthlyView('2025-06');
 
-    // Should only include June records, no May records
+    // Now getProductionRecordsForMonthlyView includes adjacent months
+    // The filtering happens in groupRecordsByWeek
     const dates = records.map((r) => r.date).sort();
-    expect(dates).not.toContain('2025-05-31');
+    expect(dates).toContain('2025-05-31'); // Now included (adjacent month)
     expect(dates).toContain('2025-06-01');
     expect(dates).toContain('2025-06-02');
     expect(dates).toContain('2025-06-03');

@@ -605,9 +605,10 @@ describe('Business Week Edge Cases - 2025 Comprehensive Testing', () => {
 
       const records = await getProductionRecordsForMonthlyView('2025-06');
 
-      // Should NOT include May 31 because June 1 is Sunday (week starts naturally)
+      // With the new eachWeekOfInterval approach, adjacent month records are included
+      // The filtering now happens in groupRecordsByWeek based on the weeks that intersect
       const dates = records.map((r) => r.date).sort();
-      expect(dates).not.toContain('2025-05-31'); // Should not include previous month
+      expect(dates).toContain('2025-05-31'); // Now included (adjacent month)
       expect(dates).toContain('2025-06-01'); // Sunday
       expect(dates).toContain('2025-06-02'); // Monday
 
@@ -642,9 +643,10 @@ describe('Business Week Edge Cases - 2025 Comprehensive Testing', () => {
 
       const records = await getProductionRecordsForMonthlyView('2025-09');
 
-      // Should NOT include August 31 because September 1 is Monday (business week starts naturally)
+      // With the new eachWeekOfInterval approach, adjacent month records are included
+      // The filtering now happens in groupRecordsByWeek based on the weeks that intersect
       const dates = records.map((r) => r.date).sort();
-      expect(dates).not.toContain('2025-08-31'); // Should not include previous month
+      expect(dates).toContain('2025-08-31'); // Now included (adjacent month)
       expect(dates).toContain('2025-09-01'); // Monday
       expect(dates).toContain('2025-09-02'); // Tuesday
 

@@ -56,8 +56,8 @@ export async function getProductionRecordsByMonth(month: string): Promise<Produc
 }
 
 /**
- * Fetches production records for a monthly view, including any previous month days
- * that belong to the first week of the target month
+ * Fetches production records for a monthly view, including any previous/next month days
+ * that belong to weeks intersecting with the target month
  */
 export async function getProductionRecordsForMonthlyView(
   month: string,
@@ -74,28 +74,13 @@ export async function getProductionRecordsForMonthlyView(
   const prevMonthString = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
   const prevMonthRecords = await getProductionRecordsByMonth(prevMonthString);
 
-  // Determine which previous month days should be included in the target month's first week
-  const firstDayOfTargetMonth = new Date(year, monthStr - 1, 1);
-  const firstDayWeekday = firstDayOfTargetMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  // Get next month records
+  const nextMonth = monthStr === 12 ? 1 : monthStr + 1;
+  const nextYear = monthStr === 12 ? year + 1 : year;
+  const nextMonthString = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
+  const nextMonthRecords = await getProductionRecordsByMonth(nextMonthString);
 
-  // If the first day is not Monday (1), we need to include previous month days
-  const relevantPrevMonthRecords: ProductionRecord[] = [];
-
-  if (firstDayWeekday > 1) {
-    // First day is Tuesday or later
-    const daysBack = firstDayWeekday - 1; // How many days back to Monday
-    const mondayOfFirstWeek = new Date(year, monthStr - 1, 1 - daysBack);
-
-    // Filter previous month records that fall in the first week of target month
-    relevantPrevMonthRecords.push(
-      ...prevMonthRecords.filter((rec) => {
-        const [recYear, recMonth, recDay] = rec.date.split('-').map(Number);
-        const recordDate = new Date(recYear, recMonth - 1, recDay);
-        return recordDate >= mondayOfFirstWeek && recordDate < firstDayOfTargetMonth;
-      }),
-    );
-  }
-
-  // Combine and return all relevant records
-  return [...relevantPrevMonthRecords, ...currentMonthRecords];
+  // For now, return all records from adjacent months
+  // The filtering will be handled by groupRecordsByWeek logic
+  return [...prevMonthRecords, ...currentMonthRecords, ...nextMonthRecords];
 }

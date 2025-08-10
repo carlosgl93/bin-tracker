@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import { Box, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
@@ -9,10 +8,13 @@ import { getProductionRecordsForMonthlyView } from '@/services/production/produc
 import { ProductionRecord } from '@/services/production/types';
 import { formatNumberES } from '@/utils/formatNumberES';
 import {
+  weeklyProduction as calcWeeklyProduction,
   calculateBusinessMonthlyTotals,
+  getWeekInfo,
   groupRecordsByWeek,
-  sumDrums,
 } from '@/utils/monthlyHelper';
+
+import { WeeklyProductionCard } from './MonthlyView/WeeklyProductionCard';
 
 function MonthlyView() {
   const [records, setRecords] = useState<ProductionRecord[] | null>(null);
@@ -45,6 +47,12 @@ function MonthlyView() {
     console.log({ records, targetMonth, targetYear });
     return groupRecordsByWeek(records, targetMonth, targetYear);
   }, [records, month]);
+
+  const weekInfo = useMemo(() => {
+    const targetMonth = month.getMonth(); // 0-based
+    const targetYear = month.getFullYear();
+    return getWeekInfo(targetMonth, targetYear);
+  }, [month]);
 
   // Calculate monthly totals using business week logic (includes previous month overflow)
   const businessMonthlyTotals = useMemo(() => {
@@ -94,102 +102,33 @@ function MonthlyView() {
             <Typography variant="body1">No hay registros para este mes.</Typography>
           ) : (
             Object.entries(weeks).map(([week, weekRecords]) => {
-              const weekTotalProducedDrumbs = sumDrums(weekRecords);
-              const weekTotalProducedKgs = weekTotalProducedDrumbs * 240;
-              // const drumStock = sumStock(weekRecords, 'drumStock', 'final');
-              const lastRecord = weekRecords[weekRecords.length - 1];
-              const finalWeeklyDrumStock =
-                weekRecords.length > 0 && lastRecord.drumStock ? lastRecord.drumStock.total : 0;
-              // const bagStock = sumStock(weekRecords, 'bagStock', 'final');
-              const totalFinalBagStock =
-                weekRecords.length > 0 && lastRecord.bagStock ? lastRecord.bagStock.total : 0;
-              // Use the last record's gasControl value for the week (usually Friday)
-              const gas =
-                lastRecord && lastRecord.gasControl && lastRecord.gasControl.length > 0
-                  ? lastRecord.gasControl[0].value
-                  : 0;
-              return (
-                <Box key={week} mb={4}>
-                  <Paper
-                    variant="outlined"
-                    sx={{ p: 2, mb: 3, borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
-                  >
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <CalendarMonthIcon sx={{ mr: 1 }} color="primary" />
-                      <Typography variant="h6">Semana {week}</Typography>
-                    </Box>
-                    {/* Vertical flow using Stack */}
-                    <Stack spacing={2}>
-                      <Paper
-                        elevation={0}
-                        sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}
-                      >
-                        <Typography variant="body1" color="text.secondary">
-                          Tambores producidos
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Suma de los tambores producidos
-                        </Typography>
-                        <Typography variant="h6" align="center">
-                          {weekTotalProducedDrumbs}
-                        </Typography>
-                      </Paper>
-                      <Paper
-                        elevation={0}
-                        sx={{ p: 2, bgcolor: 'rgba(255,253,231,0.6)', borderRadius: 1 }}
-                      >
-                        <Typography variant="body1" color="text.secondary">
-                          Kgs producidos
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Tambores {weekTotalProducedDrumbs} * 240
-                        </Typography>
-                        <Typography variant="h6" align="center">
-                          {formatNumberES(weekTotalProducedKgs)}
-                        </Typography>
-                      </Paper>
-                      <Paper
-                        elevation={0}
-                        sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}
-                      >
-                        <Typography variant="body1" color="text.secondary">
-                          Stock Tambores
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Cantidad para el siguiente lunes
-                        </Typography>
-                        <Typography variant="h6" align="center">
-                          {finalWeeklyDrumStock}
-                        </Typography>
-                      </Paper>
-                      <Paper
-                        elevation={0}
-                        sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}
-                      >
-                        <Typography variant="body1" color="text.secondary">
-                          Stock Bolsas
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Cantidad para el siguiente lunes
-                        </Typography>
-                        <Typography variant="h6" align="center">
-                          {totalFinalBagStock}
-                        </Typography>
-                      </Paper>
-                      <Paper
-                        elevation={0}
-                        sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}
-                      >
-                        <Typography variant="body1" color="text.secondary">
-                          Gas (valor)
-                        </Typography>
-                        <Typography variant="h6" align="center">
-                          {formatNumberES(gas)}
-                        </Typography>
-                      </Paper>
-                    </Stack>
-                  </Paper>
-                </Box>
+              const {
+                gas,
+                dateRange,
+                countCurrentWeekWithProduction,
+                totalFinalBagStock,
+                finalWeeklyDrumStock,
+                weekTotalProducedKgs,
+                weekTotalProducedDrumbs,
+                currentWeekInfo,
+              } = calcWeeklyProduction(weekRecords, weekInfo, week);
+              return WeeklyProductionCard(
+                week,
+                dateRange,
+                weekTotalProducedDrumbs,
+                weekTotalProducedKgs,
+                finalWeeklyDrumStock,
+                totalFinalBagStock,
+                gas,
+                countCurrentWeekWithProduction,
+                weekRecords,
+                currentWeekInfo || {
+                  weekNumber: parseInt(week),
+                  weekStart: '',
+                  weekEnd: '',
+                  businessDaysInTargetMonth: [],
+                  hasData: false,
+                },
               );
             })
           )}

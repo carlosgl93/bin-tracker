@@ -1,12 +1,4 @@
-import {
-  differenceInWeeks,
-  getDate,
-  isSameMonth,
-  isSameYear,
-  nextMonday,
-  parseISO,
-  startOfWeek,
-} from 'date-fns';
+import { eachWeekOfInterval, endOfMonth, format, getDate, parseISO, startOfMonth } from 'date-fns';
 
 import { ProductionRecord } from '@/services/production/types';
 
@@ -36,18 +28,30 @@ function groupRecordsByWeek(
   const sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
 
   if (targetMonth !== undefined && targetYear !== undefined) {
-    // Business week logic using date-fns for reliability
-    const targetMonthStart = new Date(targetYear, targetMonth, 1);
-    // Find the Monday that starts the first business week of the month
-    // This is the anchor for all week calculations
-    let firstBusinessMonday;
-    firstBusinessMonday = startOfWeek(targetMonthStart, { weekStartsOn: 0 });
-    if (firstBusinessMonday.getDate() >= 26) {
-      firstBusinessMonday = nextMonday(firstBusinessMonday);
-    }
+    // New approach: Use eachWeekOfInterval to get complete weeks for the month
+    const monthStart = startOfMonth(new Date(targetYear, targetMonth, 1));
+    const monthEnd = endOfMonth(monthStart);
 
+    // Get all weeks that intersect with this month (Monday to Sunday)
+    const weeksInMonth = eachWeekOfInterval(
+      { start: monthStart, end: monthEnd },
+      { weekStartsOn: 1 }, // Monday = 1
+    );
+
+    console.log(`Month: ${format(monthStart, 'MMMM yyyy')}`);
+    console.log(
+      'Weeks in month:',
+      weeksInMonth.map((week) => format(week, 'MMM dd')),
+    );
+
+    // Initialize weeks object
+    weeksInMonth.forEach((_, index) => {
+      weeks[index + 1] = [];
+    });
+
+    // Group records into their corresponding weeks
     sortedRecords.forEach((rec) => {
-      // Parse date with timezone consistency - always use noon to avoid DST issues
+      // Parse date with timezone consistency
       const recordDate = parseISO(rec.date + 'T12:00:00');
       const recordDay = recordDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
@@ -56,37 +60,32 @@ function groupRecordsByWeek(
         return; // Skip weekends (Saturday=6, Sunday=0)
       }
 
-      // Calculate which business week this record belongs to
-      const weekNumber = differenceInWeeks(recordDate, firstBusinessMonday) + 1;
-
-      // Business rule: Only 4 weeks per month
-      // Records in week 5+ overflow to the next month's week 1
-      if (weekNumber > 4) {
-        return; // These records will be handled by the next month's grouping
+      // IMPORTANT: Only include records that belong to the target month
+      const recordMonth = recordDate.getMonth();
+      const recordYear = recordDate.getFullYear();
+      if (recordMonth !== targetMonth || recordYear !== targetYear) {
+        return; // Skip records from other months
       }
 
-      // Ensure week number is positive and valid (1-4)
-      const finalWeekNumber = Math.max(1, Math.min(4, weekNumber));
+      // Find which week this record belongs to
+      const weekIndex = weeksInMonth.findIndex((weekStart) => {
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the same week
 
-      // Only include records that belong to this month's business weeks
-      const isTargetMonth =
-        isSameMonth(recordDate, targetMonthStart) && isSameYear(recordDate, targetMonthStart);
-      const isFromPreviousMonth = recordDate < targetMonthStart;
+        return recordDate >= weekStart && recordDate <= weekEnd;
+      });
 
-      // Include records from target month
-      if (isTargetMonth) {
-        if (!weeks[finalWeekNumber]) weeks[finalWeekNumber] = [];
-        weeks[finalWeekNumber].push(rec);
-        return;
+      if (weekIndex !== -1) {
+        const weekNumber = weekIndex + 1;
+        weeks[weekNumber].push(rec);
       }
+    });
 
-      // Include records from previous month only if they complete the first business week
-      if (isFromPreviousMonth && finalWeekNumber === 1) {
-        // Only include if the record falls within the first business week span
-        if (recordDate >= firstBusinessMonday) {
-          if (!weeks[finalWeekNumber]) weeks[finalWeekNumber] = [];
-          weeks[finalWeekNumber].push(rec);
-        }
+    // Remove empty weeks
+    Object.keys(weeks).forEach((weekKey) => {
+      const weekNum = parseInt(weekKey);
+      if (weeks[weekNum].length === 0) {
+        delete weeks[weekNum];
       }
     });
   } else {
@@ -189,6 +188,53 @@ export {
 };
 
 /**
+ * Helper function to get week information including dates that make up each week
+ * This is useful for showing date ranges in the UI
+ */
+export function getWeekInfo(targetMonth: number, targetYear: number) {
+  const monthStart = startOfMonth(new Date(targetYear, targetMonth, 1));
+  const monthEnd = endOfMonth(monthStart);
+
+  // Get all weeks that intersect with this month (Monday to Sunday)
+  const weeksInMonth = eachWeekOfInterval(
+    { start: monthStart, end: monthEnd },
+    { weekStartsOn: 1 }, // Monday = 1
+  );
+
+  return weeksInMonth
+    .map((weekStart, index) => {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the same week
+
+      // Get the business days (Mon-Fri) that belong to the target month
+      const businessDaysInTargetMonth = [];
+      for (let d = 0; d <= 6; d++) {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + d);
+
+        // Only include if it's a business day (Mon-Fri) and belongs to target month
+        const dayOfWeek = day.getDay();
+        const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+        const belongsToTargetMonth =
+          day.getMonth() === targetMonth && day.getFullYear() === targetYear;
+
+        if (isBusinessDay && belongsToTargetMonth) {
+          businessDaysInTargetMonth.push(format(day, 'yyyy-MM-dd'));
+        }
+      }
+
+      return {
+        weekNumber: index + 1,
+        weekStart: format(weekStart, 'MMM dd'),
+        weekEnd: format(weekEnd, 'MMM dd'),
+        businessDaysInTargetMonth,
+        hasData: businessDaysInTargetMonth.length > 0,
+      };
+    })
+    .filter((week) => week.hasData); // Only return weeks that have business days in target month
+}
+
+/**
  * Helper function to calculate totals using business week logic
  * This ensures consistency between weekly view and monthly totals
  */
@@ -238,5 +284,54 @@ export function calculateCalendarMonthlyTotals(
       monthlyRecords.length > 0
         ? [...monthlyRecords].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
         : null,
+  };
+}
+
+export function weeklyProduction(
+  weekRecords: ProductionRecord[],
+  weekInfo: {
+    weekNumber: number;
+    weekStart: string;
+    weekEnd: string;
+    businessDaysInTargetMonth: string[];
+    hasData: boolean;
+  }[],
+  week: string,
+) {
+  const weekTotalProducedDrumbs = sumDrums(weekRecords);
+  const weekTotalProducedKgs = weekTotalProducedDrumbs * 240;
+  // const drumStock = sumStock(weekRecords, 'drumStock', 'final');
+  const lastRecord = weekRecords[weekRecords.length - 1];
+  const finalWeeklyDrumStock =
+    weekRecords.length > 0 && lastRecord.drumStock ? lastRecord.drumStock.total : 0;
+  // const bagStock = sumStock(weekRecords, 'bagStock', 'final');
+  const totalFinalBagStock =
+    weekRecords.length > 0 && lastRecord.bagStock ? lastRecord.bagStock.total : 0;
+  // Use the last record's gasControl value for the week (usually Friday)
+  const gas =
+    lastRecord && lastRecord.gasControl && lastRecord.gasControl.length > 0
+      ? lastRecord.gasControl[0].value
+      : 0;
+
+  // Find the corresponding week info for date display
+  const currentWeekInfo = weekInfo.find((w) => w.weekNumber === parseInt(week));
+  const dateRange = currentWeekInfo ? currentWeekInfo.businessDaysInTargetMonth.join(', ') : '';
+  const countCurrentWeekWithProduction = weekRecords.length;
+  console.log({
+    week,
+    weekRecords,
+    weekInfo,
+    currentWeekInfo,
+  });
+  // const countDaysWithProduction =
+  return {
+    gas,
+    dateRange,
+    countCurrentWeekWithProduction,
+    totalFinalBagStock,
+    finalWeeklyDrumStock,
+    weekTotalProducedKgs,
+    weekTotalProducedDrumbs,
+    currentWeekInfo,
   };
 }
