@@ -70,6 +70,9 @@ const themes: Record<ThemeMode, ThemeOptions> = {
       h6: {
         fontWeight: 600,
       },
+      caption: {
+        fontSize: '1.06rem', // 33% larger than default (0.8rem * 1.33 ≈ 1.06rem)
+      },
     },
   }),
 
@@ -82,6 +85,11 @@ const themes: Record<ThemeMode, ThemeOptions> = {
       },
       primary: {
         main: '#7986cb',
+      },
+    },
+    typography: {
+      caption: {
+        fontSize: '1.06rem', // 33% larger than default (0.8rem * 1.33 ≈ 1.06rem)
       },
     },
   }),

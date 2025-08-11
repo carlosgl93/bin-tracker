@@ -112,23 +112,28 @@ function MonthlyView() {
                 weekTotalProducedDrumbs,
                 currentWeekInfo,
               } = calcWeeklyProduction(weekRecords, weekInfo, week);
-              return WeeklyProductionCard(
-                week,
-                dateRange,
-                weekTotalProducedDrumbs,
-                weekTotalProducedKgs,
-                finalWeeklyDrumStock,
-                totalFinalBagStock,
-                gas,
-                countCurrentWeekWithProduction,
-                weekRecords,
-                currentWeekInfo || {
-                  weekNumber: parseInt(week),
-                  weekStart: '',
-                  weekEnd: '',
-                  businessDaysInTargetMonth: [],
-                  hasData: false,
-                },
+              return (
+                <WeeklyProductionCard
+                  key={week}
+                  week={week}
+                  dateRange={dateRange}
+                  weekTotalProducedDrumbs={weekTotalProducedDrumbs}
+                  weekTotalProducedKgs={weekTotalProducedKgs}
+                  finalWeeklyDrumStock={finalWeeklyDrumStock}
+                  totalFinalBagStock={totalFinalBagStock}
+                  gas={gas}
+                  daysWithProduction={countCurrentWeekWithProduction}
+                  weekRecords={weekRecords}
+                  currentWeekInfo={
+                    currentWeekInfo || {
+                      weekNumber: parseInt(week),
+                      weekStart: '',
+                      weekEnd: '',
+                      businessDaysInTargetMonth: [],
+                      hasData: false,
+                    }
+                  }
+                />
               );
             })
           )}
