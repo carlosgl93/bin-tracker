@@ -9,7 +9,7 @@ import { ProductionRecord } from '@/services/production/types';
 import { formatNumberES } from '@/utils/formatNumberES';
 import {
   weeklyProduction as calcWeeklyProduction,
-  calculateBusinessMonthlyTotals,
+  calculateCalendarMonthlyTotals,
   getWeekInfo,
   groupRecordsByWeek,
 } from '@/utils/monthlyHelper';
@@ -54,20 +54,31 @@ function MonthlyView() {
     return getWeekInfo(targetMonth, targetYear);
   }, [month]);
 
-  // Calculate monthly totals using business week logic (includes previous month overflow)
-  const businessMonthlyTotals = useMemo(() => {
-    if (!records) return { totalDrums: 0, totalKgs: 0, totalGasConsumption: 0, lastRecord: null };
+  // Calculate monthly totals using calendar month logic (only current month days, no overflow)
+  const calendarMonthlyTotals = useMemo(() => {
+    if (!records)
+      return {
+        totalDrums: 0,
+        totalKgs: 0,
+        totalGasConsumption: 0,
+        lastGasValue: 0,
+        lastGasPercentage: 0,
+        lastRecord: null,
+      };
     const targetMonth = month.getMonth(); // 0-based
     const targetYear = month.getFullYear();
-    return calculateBusinessMonthlyTotals(records, targetMonth, targetYear);
+    return calculateCalendarMonthlyTotals(records, targetMonth, targetYear);
   }, [records, month]);
 
-  const monthlyTotalDrums = businessMonthlyTotals.totalDrums;
-  const monthlyTotalKgs = businessMonthlyTotals.totalKgs;
-  const totalMonthlyGasConsumption = businessMonthlyTotals.totalGasConsumption;
-  const lastRecord = businessMonthlyTotals.lastRecord;
+  const monthlyTotalDrums = calendarMonthlyTotals.totalDrums;
+  const monthlyTotalKgs = calendarMonthlyTotals.totalKgs;
+  const lastGasValue = calendarMonthlyTotals.lastGasValue ?? 0;
+  const lastGasPercentage = calendarMonthlyTotals.lastGasPercentage ?? 0;
+  const lastRecord = calendarMonthlyTotals.lastRecord;
   const lastDrumStockTotal = lastRecord?.drumStock?.total ?? 0;
   const lastBagStockTotal = lastRecord?.bagStock?.total ?? 0;
+
+  console.log({ lastGasPercentage, lastGasValue });
 
   return (
     <Box p={2}>
@@ -197,16 +208,22 @@ function MonthlyView() {
             <Typography variant="body1" color="text.secondary">
               Gas (valor)
             </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Último valor registrado
+            </Typography>
             <Typography variant="h6" align="center">
-              {formatNumberES(totalMonthlyGasConsumption)}
+              {formatNumberES(lastGasPercentage)}
             </Typography>
           </Paper>
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
             <Typography variant="body1" color="text.secondary">
               Gas (%)
             </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Último porcentaje registrado
+            </Typography>
             <Typography variant="h6" align="center">
-              {formatNumberES((totalMonthlyGasConsumption / 6000) * 100)}%
+              {formatNumberES(lastGasValue)}%
             </Typography>
           </Paper>
         </Stack>

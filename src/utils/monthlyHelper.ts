@@ -276,10 +276,25 @@ export function calculateCalendarMonthlyTotals(
     return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
   });
 
+  // Find the last record with gas data for gas KPIs
+  const recordsWithGas = monthlyRecords.filter(
+    (rec) => rec.gasControl && rec.gasControl.length > 0,
+  );
+  const lastGasRecord =
+    recordsWithGas.length > 0
+      ? [...recordsWithGas].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+      : null;
+
+  // Get the last gas values (not sum, just the last recorded values)
+  const lastGasValue = lastGasRecord?.gasControl?.[0]?.value ?? 0;
+  const lastGasPercentage = lastGasRecord?.gasControl?.[0]?.percentage ?? 0;
+
   return {
     totalDrums: sumDrums(monthlyRecords),
     totalKgs: sumDrums(monthlyRecords) * 240,
     totalGasConsumption: calculateMonthlyGasConsumption(monthlyRecords),
+    lastGasValue,
+    lastGasPercentage,
     lastRecord:
       monthlyRecords.length > 0
         ? [...monthlyRecords].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
