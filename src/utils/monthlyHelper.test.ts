@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { ProductionRecord } from '@/services/production/types';
 import {
+  calculateBusinessMonthlyTotals,
+  calculateCalendarMonthlyTotals,
   calculateMonthlyGasConsumption,
   getInitialGasValue,
   getWeekInfo,
@@ -389,5 +391,130 @@ describe('getWeekInfo', () => {
     // July 1 is Tue, so week 1 has Jul 1(Tue), 2(Wed), 3(Thu), 4(Fri) = 4 days
     expect(week1!.businessDaysInTargetMonth).toHaveLength(4);
     expect(week1!.businessDaysInTargetMonth[0]).toBe('2025-07-01');
+  });
+});
+
+describe('calculateCalendarMonthlyTotals', () => {
+  const MONTH = 5; // June 0-based
+  const YEAR = 2026;
+
+  it('returns zeros when no records', () => {
+    const result = calculateCalendarMonthlyTotals([], MONTH, YEAR);
+    expect(result.totalDrums).toBe(0);
+    expect(result.totalKgs).toBe(0);
+    expect(result.totalGasConsumption).toBe(0);
+    expect(result.lastGasValue).toBe(0);
+    expect(result.lastGasPercentage).toBe(0);
+    expect(result.lastRecord).toBeNull();
+  });
+
+  it('sums drums and kgs for records in target month', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
+      }),
+      makeRecord('2026-06-02', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 5 }],
+      }),
+    ];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.totalDrums).toBe(15);
+    expect(result.totalKgs).toBe(15 * 240);
+  });
+
+  it('excludes records from other months', () => {
+    const records = [
+      makeRecord('2026-05-31', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 20 }],
+      }),
+      makeRecord('2026-06-01', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
+      }),
+    ];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.totalDrums).toBe(10);
+  });
+
+  it('includes Saturday and Sunday records in totals (no day-of-week filter)', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
+      }), // Mon
+      makeRecord('2026-06-06', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 8 }],
+      }), // Sat
+      makeRecord('2026-06-07', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 6 }],
+      }), // Sun
+    ];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.totalDrums).toBe(24);
+  });
+
+  it('returns lastGasValue and lastGasPercentage from most recent gas record', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        gasControl: [{ day: '2026-06-01', value: 300, percentage: 90 }],
+      }),
+      makeRecord('2026-06-05', 0, {
+        gasControl: [{ day: '2026-06-05', value: 250, percentage: 75 }],
+      }),
+    ];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.lastGasValue).toBe(250);
+    expect(result.lastGasPercentage).toBe(75);
+  });
+
+  it('calculates gas consumption correctly', () => {
+    const records = [makeGasRecord('2026-06-01', 300), makeGasRecord('2026-06-02', 250)];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.totalGasConsumption).toBe(50);
+  });
+
+  it('lastRecord is the most recent record in the month', () => {
+    const records = [makeRecord('2026-06-01', 5), makeRecord('2026-06-10', 3)];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.lastRecord?.date).toBe('2026-06-10');
+  });
+});
+
+describe('calculateBusinessMonthlyTotals', () => {
+  it('returns zeros when no records', () => {
+    const result = calculateBusinessMonthlyTotals([], 5, 2026);
+    expect(result.totalDrums).toBe(0);
+    expect(result.totalKgs).toBe(0);
+  });
+
+  it('uses groupRecordsByWeek logic (excludes weekends currently)', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
+      }), // Mon
+      makeRecord('2026-06-06', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 8 }],
+      }), // Sat — excluded by current groupRecordsByWeek
+    ];
+    const result = calculateBusinessMonthlyTotals(records, 5, 2026);
+    // Only Monday counted (Saturday excluded by groupRecordsByWeek)
+    expect(result.totalDrums).toBe(10);
+  });
+
+  it('calculates totalKgs as totalDrums * 240', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 5 }],
+      }),
+    ];
+    const result = calculateBusinessMonthlyTotals(records, 5, 2026);
+    expect(result.totalKgs).toBe(5 * 240);
+  });
+
+  it('lastRecord is the chronologically last record in business weeks', () => {
+    const records = [
+      makeRecord('2026-06-01', 5),
+      makeRecord('2026-06-05', 3), // Fri
+    ];
+    const result = calculateBusinessMonthlyTotals(records, 5, 2026);
+    expect(result.lastRecord?.date).toBe('2026-06-05');
   });
 });
