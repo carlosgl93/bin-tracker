@@ -309,6 +309,7 @@ export function weeklyProduction(
     weekStart: string;
     weekEnd: string;
     businessDaysInTargetMonth: string[];
+    weekendDaysInTargetMonth: string[];
     hasData: boolean;
   }[],
   week: string,
