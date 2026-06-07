@@ -13,6 +13,7 @@ import {
   sumGas,
   sumGasForWeek,
   sumStock,
+  weeklyProduction,
 } from '@/utils/monthlyHelper';
 
 function makeRecord(
@@ -516,5 +517,79 @@ describe('calculateBusinessMonthlyTotals', () => {
     ];
     const result = calculateBusinessMonthlyTotals(records, 5, 2026);
     expect(result.lastRecord?.date).toBe('2026-06-05');
+  });
+});
+
+describe('weeklyProduction', () => {
+  // June 2026 week info (pre-computed for tests)
+  const weekInfo = getWeekInfo(5, 2026);
+
+  it('calculates drum and kg totals from weekRecords', () => {
+    const weekRecords = [
+      makeRecord('2026-06-01', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
+        drumStock: { initial: 100, used: 10, total: 90 },
+        bagStock: { initial: 50, used: 5, damaged: 0, total: 45 },
+        gasControl: [{ day: '2026-06-01', value: 300, percentage: 80 }],
+      }),
+      makeRecord('2026-06-02', 0, {
+        drumProductionByHour: [{ range: '09:00-10:00', count: 5 }],
+        drumStock: { initial: 90, used: 5, total: 85 },
+        bagStock: { initial: 45, used: 3, damaged: 0, total: 42 },
+        gasControl: [{ day: '2026-06-02', value: 280, percentage: 75 }],
+      }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.weekTotalProducedDrumbs).toBe(15);
+    expect(result.weekTotalProducedKgs).toBe(15 * 240);
+  });
+
+  it('uses last record for drum stock, bag stock, and gas', () => {
+    const weekRecords = [
+      makeRecord('2026-06-01', 0, {
+        drumStock: { initial: 100, used: 10, total: 90 },
+        bagStock: { initial: 50, used: 5, damaged: 0, total: 45 },
+        gasControl: [{ day: '2026-06-01', value: 300, percentage: 80 }],
+      }),
+      makeRecord('2026-06-05', 0, {
+        drumStock: { initial: 90, used: 5, total: 85 },
+        bagStock: { initial: 45, used: 3, damaged: 0, total: 42 },
+        gasControl: [{ day: '2026-06-05', value: 270, percentage: 70 }],
+      }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.finalWeeklyDrumStock).toBe(85);
+    expect(result.totalFinalBagStock).toBe(42);
+    expect(result.gas).toBe(270);
+  });
+
+  it('countCurrentWeekWithProduction equals number of records', () => {
+    const weekRecords = [
+      makeRecord('2026-06-01', 5),
+      makeRecord('2026-06-02', 3),
+      makeRecord('2026-06-03', 7),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.countCurrentWeekWithProduction).toBe(3);
+  });
+
+  it('returns currentWeekInfo for matching week number', () => {
+    const weekRecords = [makeRecord('2026-06-01', 5)];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.currentWeekInfo?.weekNumber).toBe(1);
+  });
+
+  it('gas is 0 when last record has no gasControl', () => {
+    const weekRecords = [makeRecord('2026-06-01', 5, { gasControl: [] })];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.gas).toBe(0);
+  });
+
+  it('finalWeeklyDrumStock is 0 when last record has zero drumStock total', () => {
+    const weekRecords = [
+      makeRecord('2026-06-01', 5, { drumStock: { initial: 0, used: 0, total: 0 } }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.finalWeeklyDrumStock).toBe(0);
   });
 });
