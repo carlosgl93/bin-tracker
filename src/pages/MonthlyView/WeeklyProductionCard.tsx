@@ -36,6 +36,7 @@ interface WeeklyProductionCardProps {
     weekStart: string;
     weekEnd: string;
     businessDaysInTargetMonth: string[];
+    weekendDaysInTargetMonth: string[];
     hasData: boolean;
   };
 }
@@ -204,6 +205,84 @@ export function WeeklyProductionCard({
       );
     })
     .filter(Boolean);
+
+  // Weekend day chips — only shown when a record exists for that day
+  const weekendIndicators = currentWeekInfo.weekendDaysInTargetMonth
+    .map((dayId) => {
+      const record = weekRecords.find((r) => r.id === dayId);
+      if (!record) return null; // No red chips for unworked weekends
+
+      const dayDate = parseISO(dayId);
+      if (!isValid(dayDate)) return null;
+
+      const dayLabel = format(dayDate, 'dd', { locale: es });
+
+      const tooltipContent = (
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+            {format(dayDate, 'dd MMM', { locale: es })}
+          </Typography>
+          <Typography variant="caption">
+            Total tambores producidos:{' '}
+            {record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) || 0}
+          </Typography>
+          <br />
+          <Typography variant="caption">
+            Kgs:{' '}
+            {formatNumberES(
+              (record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) || 0) * 240,
+            )}
+          </Typography>
+          <br />
+          <Typography variant="caption">Stock tambores: {record.drumStock?.total || 0}</Typography>
+          <br />
+          <Typography variant="caption">Stock bolsas: {record.bagStock?.total || 0}</Typography>
+        </Box>
+      );
+
+      if (isMobile) {
+        return (
+          <Chip
+            key={dayId}
+            label={dayLabel}
+            size="small"
+            sx={{
+              backgroundColor: '#4caf50',
+              color: 'white',
+              minWidth: '32px',
+              height: '24px',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              '&:hover': { backgroundColor: '#45a049' },
+            }}
+            onClick={() => {
+              setModalContent(tooltipContent);
+              setOpenModal(true);
+            }}
+          />
+        );
+      }
+
+      return (
+        <Tooltip key={dayId} title={tooltipContent} arrow>
+          <Chip
+            label={dayLabel}
+            size="small"
+            sx={{
+              backgroundColor: '#4caf50',
+              color: 'white',
+              minWidth: '32px',
+              height: '24px',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              '&:hover': { backgroundColor: '#45a049' },
+            }}
+          />
+        </Tooltip>
+      );
+    })
+    .filter(Boolean);
+
   return (
     <Box key={week} mb={4}>
       <Paper
@@ -224,7 +303,15 @@ export function WeeklyProductionCard({
         </Box>
         {/* Vertical flow using Stack */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', gap: 0.5, mx: 2 }}>{dayIndicators}</Box>
+          <Box sx={{ display: 'flex', gap: 0.5, mx: 2, flexWrap: 'wrap' }}>
+            {dayIndicators}
+            {weekendIndicators.length > 0 && (
+              <>
+                <Box sx={{ width: '4px' }} />
+                {weekendIndicators}
+              </>
+            )}
+          </Box>
           <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
             {daysWithProduction} días con producción
           </Typography>

@@ -141,6 +141,7 @@ function MonthlyView() {
                       weekStart: '',
                       weekEnd: '',
                       businessDaysInTargetMonth: [],
+                      weekendDaysInTargetMonth: [],
                       hasData: false,
                     }
                   }
