@@ -5,6 +5,7 @@ import { ProductionRecord } from '@/services/production/types';
 import {
   calculateMonthlyGasConsumption,
   getInitialGasValue,
+  groupRecordsByWeek,
   sumDrums,
   sumGas,
   sumGasForWeek,
@@ -247,5 +248,93 @@ describe('calculateMonthlyGasConsumption', () => {
       makeGasRecord('2026-06-03', 250),
     ];
     expect(calculateMonthlyGasConsumption(records)).toBe(50);
+  });
+});
+
+describe('groupRecordsByWeek', () => {
+  // June 2026: June 1 is Monday — clean week boundaries
+  const MONTH = 5; // 0-based June
+  const YEAR = 2026;
+
+  describe('with targetMonth and targetYear', () => {
+    it('groups weekday records into correct weeks', () => {
+      const records = [
+        makeRecord('2026-06-01', 10), // Mon week 1
+        makeRecord('2026-06-02', 10), // Tue week 1
+        makeRecord('2026-06-08', 10), // Mon week 2
+      ];
+      const weeks = groupRecordsByWeek(records, MONTH, YEAR);
+      expect(Object.keys(weeks)).toHaveLength(2);
+      expect(weeks[1]).toHaveLength(2);
+      expect(weeks[2]).toHaveLength(1);
+    });
+
+    it('excludes Saturday records', () => {
+      const records = [
+        makeRecord('2026-06-01', 10), // Mon
+        makeRecord('2026-06-06', 10), // Sat — should be excluded
+      ];
+      const weeks = groupRecordsByWeek(records, MONTH, YEAR);
+      expect(weeks[1]).toHaveLength(1);
+      expect(weeks[1][0].date).toBe('2026-06-01');
+    });
+
+    it('excludes Sunday records', () => {
+      const records = [
+        makeRecord('2026-06-01', 10), // Mon
+        makeRecord('2026-06-07', 10), // Sun — should be excluded
+      ];
+      const weeks = groupRecordsByWeek(records, MONTH, YEAR);
+      expect(weeks[1]).toHaveLength(1);
+    });
+
+    it('excludes records from other months', () => {
+      const records = [
+        makeRecord('2026-05-31', 10), // Previous month Sunday
+        makeRecord('2026-06-01', 10), // June — included
+        makeRecord('2026-07-01', 10), // Next month
+      ];
+      const weeks = groupRecordsByWeek(records, MONTH, YEAR);
+      const allRecords = Object.values(weeks).flat();
+      expect(allRecords).toHaveLength(1);
+      expect(allRecords[0].date).toBe('2026-06-01');
+    });
+
+    it('removes empty weeks', () => {
+      const records = [
+        makeRecord('2026-06-01', 10), // week 1 only
+      ];
+      const weeks = groupRecordsByWeek(records, MONTH, YEAR);
+      expect(Object.keys(weeks)).toEqual(['1']);
+    });
+
+    it('returns empty object when no records match', () => {
+      const weeks = groupRecordsByWeek([], MONTH, YEAR);
+      expect(Object.keys(weeks)).toHaveLength(0);
+    });
+
+    it('handles adjacent-month Monday correctly (July 2025 starts Tuesday)', () => {
+      // groupRecordsByWeek filters to July only even when June 30 is passed
+      const records = [
+        makeRecord('2025-06-30', 10), // Mon, but June — excluded
+        makeRecord('2025-07-01', 10), // Tue July — included
+      ];
+      const weeks = groupRecordsByWeek(records, 6, 2025); // July = month 6
+      const allRecords = Object.values(weeks).flat();
+      expect(allRecords).toHaveLength(1);
+      expect(allRecords[0].date).toBe('2025-07-01');
+    });
+  });
+
+  describe('fallback (no targetMonth/targetYear)', () => {
+    it('groups records by simple week-of-month calculation', () => {
+      const records = [
+        makeRecord('2026-06-01', 10), // day 1 → week 1
+        makeRecord('2026-06-08', 10), // day 8 → week 2
+      ];
+      const weeks = groupRecordsByWeek(records);
+      expect(weeks[1]).toBeDefined();
+      expect(weeks[2]).toBeDefined();
+    });
   });
 });
