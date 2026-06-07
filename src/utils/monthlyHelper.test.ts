@@ -5,6 +5,7 @@ import { ProductionRecord } from '@/services/production/types';
 import {
   calculateMonthlyGasConsumption,
   getInitialGasValue,
+  getWeekInfo,
   groupRecordsByWeek,
   sumDrums,
   sumGas,
@@ -336,5 +337,57 @@ describe('groupRecordsByWeek', () => {
       expect(weeks[1]).toBeDefined();
       expect(weeks[2]).toBeDefined();
     });
+  });
+});
+
+describe('getWeekInfo', () => {
+  // June 2026: starts Monday June 1
+  it('returns weeks that have business days in target month', () => {
+    const info = getWeekInfo(5, 2026); // June 2026
+    expect(info.length).toBeGreaterThan(0);
+    info.forEach((w) => expect(w.hasData).toBe(true));
+  });
+
+  it('businessDaysInTargetMonth contains only Mon-Fri dates in the target month', () => {
+    const info = getWeekInfo(5, 2026); // June 2026
+    info.forEach((week) => {
+      week.businessDaysInTargetMonth.forEach((dateStr) => {
+        const date = new Date(dateStr + 'T12:00:00');
+        const day = date.getDay();
+        // Must be Mon(1) through Fri(5)
+        expect(day).toBeGreaterThanOrEqual(1);
+        expect(day).toBeLessThanOrEqual(5);
+        // Must be in June 2026
+        expect(date.getMonth()).toBe(5);
+        expect(date.getFullYear()).toBe(2026);
+      });
+    });
+  });
+
+  it('week 1 of June 2026 has 5 business days (Mon Jun 1 – Fri Jun 5)', () => {
+    const info = getWeekInfo(5, 2026);
+    const week1 = info.find((w) => w.weekNumber === 1);
+    expect(week1).toBeDefined();
+    expect(week1!.businessDaysInTargetMonth).toHaveLength(5);
+    expect(week1!.businessDaysInTargetMonth[0]).toBe('2026-06-01');
+    expect(week1!.businessDaysInTargetMonth[4]).toBe('2026-06-05');
+  });
+
+  it('assigns sequential weekNumbers starting at 1', () => {
+    const info = getWeekInfo(5, 2026);
+    const weekNumbers = info.map((w) => w.weekNumber);
+    expect(weekNumbers[0]).toBe(1);
+    weekNumbers.forEach((n, i) => {
+      if (i > 0) expect(n).toBe(weekNumbers[i - 1] + 1);
+    });
+  });
+
+  it('handles July 2025 which starts on Tuesday (week 1 has only Tue–Fri)', () => {
+    const info = getWeekInfo(6, 2025); // July 2025
+    const week1 = info.find((w) => w.weekNumber === 1);
+    expect(week1).toBeDefined();
+    // July 1 is Tue, so week 1 has Jul 1(Tue), 2(Wed), 3(Thu), 4(Fri) = 4 days
+    expect(week1!.businessDaysInTargetMonth).toHaveLength(4);
+    expect(week1!.businessDaysInTargetMonth[0]).toBe('2025-07-01');
   });
 });
