@@ -95,6 +95,20 @@ describe('sumStock', () => {
   it('returns 0 for empty array', () => {
     expect(sumStock([], 'drumStock', 'final')).toBe(0);
   });
+
+  it('returns 0 for drum stock when record has no drumStock data', () => {
+    const rec = makeRecord('2026-06-02', 0, {
+      drumStock: { initial: 0, used: 0, total: 0 },
+    });
+    expect(sumStock([rec], 'drumStock', 'final')).toBe(0);
+  });
+
+  it('returns 0 for bag stock when record has no bagStock data', () => {
+    const rec = makeRecord('2026-06-02', 0, {
+      bagStock: { initial: 0, used: 0, damaged: 0, total: 0 },
+    });
+    expect(sumStock([rec], 'bagStock', 'final')).toBe(0);
+  });
 });
 
 describe('sumGas', () => {
@@ -133,6 +147,11 @@ describe('sumGasForWeek', () => {
       }),
     ];
     expect(sumGasForWeek(records)).toBe(150);
+  });
+
+  it('returns 0 for records with no gasControl', () => {
+    const rec = makeRecord('2026-06-02', 5, { gasControl: [] });
+    expect(sumGasForWeek([rec])).toBe(0);
   });
 });
 
