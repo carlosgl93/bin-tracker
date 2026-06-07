@@ -273,23 +273,22 @@ describe('groupRecordsByWeek', () => {
       expect(weeks[2]).toHaveLength(1);
     });
 
-    it('excludes Saturday records', () => {
+    it('includes Saturday records in the same week', () => {
       const records = [
-        makeRecord('2026-06-01', 10), // Mon
-        makeRecord('2026-06-06', 10), // Sat — should be excluded
+        makeRecord('2026-06-01', 10), // Mon week 1
+        makeRecord('2026-06-06', 10), // Sat week 1 — now included
       ];
       const weeks = groupRecordsByWeek(records, MONTH, YEAR);
-      expect(weeks[1]).toHaveLength(1);
-      expect(weeks[1][0].date).toBe('2026-06-01');
+      expect(weeks[1]).toHaveLength(2);
     });
 
-    it('excludes Sunday records', () => {
+    it('includes Sunday records in the same week', () => {
       const records = [
-        makeRecord('2026-06-01', 10), // Mon
-        makeRecord('2026-06-07', 10), // Sun — should be excluded
+        makeRecord('2026-06-01', 10), // Mon week 1
+        makeRecord('2026-06-07', 10), // Sun week 1 — now included
       ];
       const weeks = groupRecordsByWeek(records, MONTH, YEAR);
-      expect(weeks[1]).toHaveLength(1);
+      expect(weeks[1]).toHaveLength(2);
     });
 
     it('excludes records from other months', () => {
@@ -393,6 +392,27 @@ describe('getWeekInfo', () => {
     expect(week1!.businessDaysInTargetMonth).toHaveLength(4);
     expect(week1!.businessDaysInTargetMonth[0]).toBe('2025-07-01');
   });
+
+  it('weekendDaysInTargetMonth contains Sat and Sun dates in target month', () => {
+    const info = getWeekInfo(5, 2026); // June 2026
+    info.forEach((week) => {
+      week.weekendDaysInTargetMonth.forEach((dateStr) => {
+        const date = new Date(dateStr + 'T12:00:00');
+        const day = date.getDay();
+        expect([0, 6]).toContain(day); // Sat=6 or Sun=0
+        expect(date.getMonth()).toBe(5);
+        expect(date.getFullYear()).toBe(2026);
+      });
+    });
+  });
+
+  it('week 1 of June 2026 has Sat Jun 6 and Sun Jun 7 as weekend days', () => {
+    const info = getWeekInfo(5, 2026);
+    const week1 = info.find((w) => w.weekNumber === 1);
+    expect(week1!.weekendDaysInTargetMonth).toHaveLength(2);
+    expect(week1!.weekendDaysInTargetMonth).toContain('2026-06-06');
+    expect(week1!.weekendDaysInTargetMonth).toContain('2026-06-07');
+  });
 });
 
 describe('calculateCalendarMonthlyTotals', () => {
@@ -486,18 +506,17 @@ describe('calculateBusinessMonthlyTotals', () => {
     expect(result.totalKgs).toBe(0);
   });
 
-  it('uses groupRecordsByWeek logic (excludes weekends currently)', () => {
+  it('includes weekend records (weekends count toward totals)', () => {
     const records = [
       makeRecord('2026-06-01', 0, {
         drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
       }), // Mon
       makeRecord('2026-06-06', 0, {
         drumProductionByHour: [{ range: '09:00-10:00', count: 8 }],
-      }), // Sat — excluded by current groupRecordsByWeek
+      }), // Sat — now included
     ];
     const result = calculateBusinessMonthlyTotals(records, 5, 2026);
-    // Only Monday counted (Saturday excluded by groupRecordsByWeek)
-    expect(result.totalDrums).toBe(10);
+    expect(result.totalDrums).toBe(18);
   });
 
   it('calculates totalKgs as totalDrums * 240', () => {

@@ -53,12 +53,6 @@ function groupRecordsByWeek(
     sortedRecords.forEach((rec) => {
       // Parse date with timezone consistency
       const recordDate = parseISO(rec.date + 'T12:00:00');
-      const recordDay = recordDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-
-      // Business requirement: Only include Monday (1) through Friday (5)
-      if (recordDay === 0 || recordDay === 6) {
-        return; // Skip weekends (Saturday=6, Sunday=0)
-      }
 
       // IMPORTANT: Only include records that belong to the target month
       const recordMonth = recordDate.getMonth();
@@ -68,11 +62,13 @@ function groupRecordsByWeek(
       }
 
       // Find which week this record belongs to
-      const weekIndex = weeksInMonth.findIndex((weekStart) => {
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the same week
-
-        return recordDate >= weekStart && recordDate <= weekEnd;
+      const weekIndex = weeksInMonth.findIndex((weekStart, i) => {
+        const nextWeekStart = weeksInMonth[i + 1];
+        if (nextWeekStart) {
+          return recordDate >= weekStart && recordDate < nextWeekStart;
+        }
+        // Last week: just check recordDate >= weekStart
+        return recordDate >= weekStart;
       });
 
       if (weekIndex !== -1) {
@@ -206,20 +202,23 @@ export function getWeekInfo(targetMonth: number, targetYear: number) {
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the same week
 
-      // Get the business days (Mon-Fri) that belong to the target month
-      const businessDaysInTargetMonth = [];
+      const businessDaysInTargetMonth: string[] = [];
+      const weekendDaysInTargetMonth: string[] = [];
+
       for (let d = 0; d <= 6; d++) {
         const day = new Date(weekStart);
         day.setDate(weekStart.getDate() + d);
 
-        // Only include if it's a business day (Mon-Fri) and belongs to target month
         const dayOfWeek = day.getDay();
-        const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
         const belongsToTargetMonth =
           day.getMonth() === targetMonth && day.getFullYear() === targetYear;
 
-        if (isBusinessDay && belongsToTargetMonth) {
+        if (!belongsToTargetMonth) continue;
+
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
           businessDaysInTargetMonth.push(format(day, 'yyyy-MM-dd'));
+        } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+          weekendDaysInTargetMonth.push(format(day, 'yyyy-MM-dd'));
         }
       }
 
@@ -228,6 +227,7 @@ export function getWeekInfo(targetMonth: number, targetYear: number) {
         weekStart: format(weekStart, 'MMM dd'),
         weekEnd: format(weekEnd, 'MMM dd'),
         businessDaysInTargetMonth,
+        weekendDaysInTargetMonth,
         hasData: businessDaysInTargetMonth.length > 0,
       };
     })
