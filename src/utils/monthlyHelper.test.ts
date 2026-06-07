@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ProductionRecord } from '@/services/production/types';
 import {
+  calculateMonthlyGasConsumption,
   getInitialGasValue,
   sumDrums,
   sumGas,
@@ -33,6 +34,17 @@ function makeRecord(
     totalFinal: 0,
     ...overrides,
   };
+}
+
+function makeGasRecord(
+  date: string,
+  gasValue: number,
+  overrides: Partial<ProductionRecord> = {},
+): ProductionRecord {
+  return makeRecord(date, 0, {
+    gasControl: [{ day: date, value: gasValue, percentage: 0 }],
+    ...overrides,
+  });
 }
 
 describe('sumDrums', () => {
@@ -174,5 +186,66 @@ describe('getInitialGasValue', () => {
   it('returns null when gasControl is empty array', () => {
     const rec = makeRecord('2026-06-02', 0, { gasControl: [] });
     expect(getInitialGasValue(rec)).toBeNull();
+  });
+});
+
+describe('calculateMonthlyGasConsumption', () => {
+  it('returns 0 for empty array', () => {
+    expect(calculateMonthlyGasConsumption([])).toBe(0);
+  });
+
+  it('returns 0 for a single record (no previous to compare)', () => {
+    const records = [makeGasRecord('2026-06-02', 300)];
+    expect(calculateMonthlyGasConsumption(records)).toBe(0);
+  });
+
+  it('calculates consumption between two records', () => {
+    // Mon: 300, Tue: 250 → consumed 50
+    const records = [makeGasRecord('2026-06-02', 300), makeGasRecord('2026-06-03', 250)];
+    expect(calculateMonthlyGasConsumption(records)).toBe(50);
+  });
+
+  it('accumulates consumption across multiple days', () => {
+    // Mon 300 → Tue 250 (50) → Wed 200 (50) → Thu 150 (50) → total 150
+    const records = [
+      makeGasRecord('2026-06-01', 300),
+      makeGasRecord('2026-06-02', 250),
+      makeGasRecord('2026-06-03', 200),
+      makeGasRecord('2026-06-04', 150),
+    ];
+    expect(calculateMonthlyGasConsumption(records)).toBe(150);
+  });
+
+  it('detects a recharge and resets tracking', () => {
+    // Mon 300 → Tue 250 (consumed 50) → Wed 400 (recharge, reset) → Thu 350 (consumed 50)
+    // Total = 50 + 50 = 100
+    const records = [
+      makeGasRecord('2026-06-01', 300),
+      makeGasRecord('2026-06-02', 250),
+      makeGasRecord('2026-06-03', 400), // recharge
+      makeGasRecord('2026-06-04', 350),
+    ];
+    expect(calculateMonthlyGasConsumption(records)).toBe(100);
+  });
+
+  it('handles records out of order (sorts by date)', () => {
+    // Provided in reverse, sorted: 350 → 300 (50) → 250 (50) → 150 (100) = 200
+    const records = [
+      makeGasRecord('2026-06-04', 150),
+      makeGasRecord('2026-06-02', 300),
+      makeGasRecord('2026-06-03', 250),
+      makeGasRecord('2026-06-01', 350),
+    ];
+    expect(calculateMonthlyGasConsumption(records)).toBe(200);
+  });
+
+  it('skips records with no gas data', () => {
+    // Mon 300 → Tue has no gas → Wed 250 → consumed = 50 (from Mon to Wed)
+    const records = [
+      makeGasRecord('2026-06-01', 300),
+      makeRecord('2026-06-02', 5), // no gas
+      makeGasRecord('2026-06-03', 250),
+    ];
+    expect(calculateMonthlyGasConsumption(records)).toBe(50);
   });
 });
