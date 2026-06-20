@@ -32,7 +32,7 @@ function makeRecord(
     bagStock: { initial: 0, used: 0, damaged: 0, total: 0 },
     binsStatus: [],
     binsMalfunction: 0,
-    brix: { 1: 0, 2: 0, 3: 0, average: 0 },
+    brix: { 1: 0, 2: 0, 3: 0 },
     totalDrumsWeight: 0,
     totalExistence: 0,
     totalProcessed: 0,

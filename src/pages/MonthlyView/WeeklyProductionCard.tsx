@@ -117,9 +117,7 @@ export function WeeklyProductionCard({
                 {Object.entries(record.brix).map(([b, i]) => (
                   <tr key={i}>
                     <td>
-                      <Typography variant="caption">
-                        {b === 'average' ? `Promedio: ${i.toFixed(2)}` : `${b}: ${i}`}
-                      </Typography>
+                      <Typography variant="caption">{`${b}: ${i}`}</Typography>
                     </td>
                   </tr>
                 ))}

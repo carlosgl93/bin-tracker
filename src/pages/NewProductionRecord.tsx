@@ -136,7 +136,6 @@ function normalizeProductionRecord(data: ProductionRecord): ProductionRecord {
       1: data.brix?.[1] ?? '',
       2: data.brix?.[2] ?? '',
       3: data.brix?.[3] ?? '',
-      average: data.brix?.average ?? '',
     },
     comments: data.comments ?? '',
   };
@@ -348,11 +347,6 @@ function NewProductionRecord() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const brixAverage =
-      (parseChileanDecimal(brixs[1]) +
-        parseChileanDecimal(brixs[2]) +
-        parseChileanDecimal(brixs[3])) /
-      3;
 
     const data: ProductionRecord = {
       date: fecha,
@@ -399,7 +393,6 @@ function NewProductionRecord() {
         1: parseChileanDecimal(brixs[1]),
         2: parseChileanDecimal(brixs[2]),
         3: parseChileanDecimal(brixs[3]),
-        average: isNaN(brixAverage) ? 0 : brixAverage,
       },
       comments: comments.trim() || '',
     };

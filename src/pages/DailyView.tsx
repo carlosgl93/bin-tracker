@@ -316,25 +316,6 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 <Typography>3:</Typography>
                 <Typography fontWeight="bold">{formatNumberES(record?.brix?.[3])}</Typography>
               </Box>
-              <Divider />
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
-              >
-                <Typography>Promedio:</Typography>
-                <Typography fontWeight="bold">
-                  {(() => {
-                    const b1 = Number(record?.brix?.[1]);
-                    const b2 = Number(record?.brix?.[2]);
-                    const b3 = Number(record?.brix?.[3]);
-                    const valid = [b1, b2, b3].filter((v) => !isNaN(v));
-                    if (valid.length === 0) return '-';
-                    return (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(2);
-                  })()}
-                </Typography>
-              </Box>
             </Stack>
           </Paper>
         </Grid>

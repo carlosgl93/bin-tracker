@@ -35,7 +35,7 @@ function createTestRecord(
     totalExistence: 0,
     totalProcessed: 0,
     totalFinal: 0,
-    brix: { 1: 0, 2: 0, 3: 0, average: 0 },
+    brix: { 1: 0, 2: 0, 3: 0 },
     totalDrumsWeight: 0,
     drumProductionByHour,
   };
