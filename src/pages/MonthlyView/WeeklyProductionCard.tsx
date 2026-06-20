@@ -21,6 +21,7 @@ import { es } from 'date-fns/locale';
 import { ProductionRecord } from '@/services/production/types';
 import { formatNumberES } from '@/utils';
 import { drumsToKgs } from '@/utils/conversionFactors';
+import { defectuososPercent, sumBinsMalos, sumRecepcionadosKgs } from '@/utils/monthlyHelper';
 
 interface WeeklyProductionCardProps {
   week: string;
@@ -285,6 +286,11 @@ export function WeeklyProductionCard({
     })
     .filter(Boolean);
 
+  // Items 7-9: weekly KPIs
+  const weekRecepcionadosKgs = sumRecepcionadosKgs(weekRecords);
+  const weekBinsMalos = sumBinsMalos(weekRecords);
+  const weekDefectuososPercent = defectuososPercent(weekRecords);
+
   return (
     <Box key={week} mb={4}>
       <Paper
@@ -339,6 +345,39 @@ export function WeeklyProductionCard({
             </Typography>
             <Typography variant="h6" align="center">
               {formatNumberES(weekTotalProducedKgs)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,253,245,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Kilogramos recepcionados
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Suma bins Chechito + Don Luis + Otros, * 700
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(weekRecepcionadosKgs)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,240,230,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Bins malos
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Suma binsMalfunction de la semana
+            </Typography>
+            <Typography variant="h6" align="center">
+              {formatNumberES(weekBinsMalos)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,240,230,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              % defectuosos
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              binsMalfunction / (OK + malos) * 100
+            </Typography>
+            <Typography variant="h6" align="center">
+              {weekDefectuososPercent.toFixed(1)}%
             </Typography>
           </Paper>
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>

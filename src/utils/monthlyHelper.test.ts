@@ -6,12 +6,15 @@ import {
   calculateBusinessMonthlyTotals,
   calculateCalendarMonthlyTotals,
   calculateMonthlyGasConsumption,
+  defectuososPercent,
   getInitialGasValue,
   getWeekInfo,
   groupRecordsByWeek,
+  sumBinsMalos,
   sumDrums,
   sumGas,
   sumGasForWeek,
+  sumRecepcionadosKgs,
   sumStock,
   weeklyProduction,
 } from '@/utils/monthlyHelper';
@@ -568,6 +571,136 @@ describe('calculateBusinessMonthlyTotals', () => {
     ];
     const result = calculateBusinessMonthlyTotals(records, 5, 2026);
     expect(result.lastRecord?.date).toBe('2026-06-05');
+  });
+});
+
+describe('sumBinsMalos', () => {
+  it('sums binsMalfunction across records', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, { binsMalfunction: 3 }),
+      makeRecord('2026-06-02', 0, { binsMalfunction: 5 }),
+    ];
+    expect(sumBinsMalos(records)).toBe(8);
+  });
+
+  it('returns 0 for empty array', () => {
+    expect(sumBinsMalos([])).toBe(0);
+  });
+
+  it('treats missing binsMalfunction as 0', () => {
+    const rec = makeRecord('2026-06-01', 0, { binsMalfunction: 0 });
+    expect(sumBinsMalos([rec])).toBe(0);
+  });
+});
+
+describe('sumRecepcionadosKgs', () => {
+  it('returns 0 for empty array', () => {
+    expect(sumRecepcionadosKgs([])).toBe(0);
+  });
+
+  it('sums Chechito + Don Luis + Otros bins across records, multiplied by 700', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        binsStatus: [
+          { source: 'Inicio', quantity: 8 },
+          { source: 'Chechito', quantity: 10 },
+          { source: 'Don Luis', quantity: 5 },
+          { source: 'Otros', quantity: 2 },
+        ],
+      }),
+    ];
+    // (10 + 5 + 2) * 700 = 11900
+    expect(sumRecepcionadosKgs(records)).toBe(17 * 700);
+  });
+
+  it('excludes Inicio from recepcionados', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        binsStatus: [
+          { source: 'Inicio', quantity: 999 }, // should be ignored
+          { source: 'Chechito', quantity: 1 },
+        ],
+      }),
+    ];
+    expect(sumRecepcionadosKgs(records)).toBe(700);
+  });
+
+  it('accumulates across multiple days', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        binsStatus: [
+          { source: 'Chechito', quantity: 10 },
+          { source: 'Don Luis', quantity: 0 },
+          { source: 'Otros', quantity: 0 },
+        ],
+      }),
+      makeRecord('2026-06-02', 0, {
+        binsStatus: [
+          { source: 'Chechito', quantity: 5 },
+          { source: 'Don Luis', quantity: 0 },
+          { source: 'Otros', quantity: 0 },
+        ],
+      }),
+    ];
+    // (10 + 5) * 700 = 10500
+    expect(sumRecepcionadosKgs(records)).toBe(15 * 700);
+  });
+
+  it('handles missing binsStatus as 0', () => {
+    const rec = makeRecord('2026-06-01', 0, { binsStatus: [] });
+    expect(sumRecepcionadosKgs([rec])).toBe(0);
+  });
+});
+
+describe('defectuososPercent', () => {
+  it('returns 0 when no records', () => {
+    expect(defectuososPercent([])).toBe(0);
+  });
+
+  it('returns 0.0 for 0/100 case (no malos)', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        binsStatus: [
+          { source: 'Inicio', quantity: 50 },
+          { source: 'Chechito', quantity: 30 },
+          { source: 'Don Luis', quantity: 20 },
+          { source: 'Otros', quantity: 0 },
+        ],
+        binsMalfunction: 0,
+      }),
+    ];
+    expect(defectuososPercent(records)).toBe(0);
+  });
+
+  it('matches formula: 5 malos / 100 OK + 5 malos = 4.76%', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        binsStatus: [
+          { source: 'Inicio', quantity: 50 },
+          { source: 'Chechito', quantity: 30 },
+          { source: 'Don Luis', quantity: 20 },
+          { source: 'Otros', quantity: 0 },
+        ],
+        binsMalfunction: 5,
+      }),
+    ];
+    const result = defectuososPercent(records);
+    expect(result).toBeCloseTo(4.76, 1);
+  });
+
+  it('returns 100 when only binsMalos exist with no OK', () => {
+    const records = [makeRecord('2026-06-01', 0, { binsStatus: [], binsMalfunction: 5 })];
+    expect(defectuososPercent(records)).toBe(100);
+  });
+
+  it('treats missing binsMalfunction as 0', () => {
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        binsStatus: [{ source: 'Inicio', quantity: 100 }],
+        binsMalfunction: 0,
+      }),
+    ];
+    expect(defectuososPercent(records)).toBe(0);
   });
 });
 

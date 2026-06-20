@@ -1,7 +1,7 @@
 import { eachWeekOfInterval, endOfMonth, format, getDate, parseISO, startOfMonth } from 'date-fns';
 
 import { ProductionRecord } from '@/services/production/types';
-import { drumsToKgs } from '@/utils/conversionFactors';
+import { binsToKgs, drumsToKgs } from '@/utils/conversionFactors';
 
 function getWeekOfMonthISO(dateString: string) {
   // Parse date as local date to avoid timezone issues
@@ -140,6 +140,41 @@ function sumGasForWeek(records: ProductionRecord[]) {
   }, 0);
 }
 
+// Items 7-9: weekly KPIs
+// Sum Chechito + Don Luis + Otros bins per record, convert to kg, sum weekly.
+function sumRecepcionadosKgs(records: ProductionRecord[]) {
+  return records.reduce((sum, rec) => {
+    const dayRecepcionados = (rec.binsStatus || []).reduce((acc, b) => {
+      if (b.source === 'Chechito' || b.source === 'Don Luis' || b.source === 'Otros') {
+        return acc + (b.quantity || 0);
+      }
+      return acc;
+    }, 0);
+    return sum + binsToKgs(dayRecepcionados);
+  }, 0);
+}
+
+// Sum of binsMalfunction across records.
+function sumBinsMalos(records: ProductionRecord[]) {
+  return records.reduce((sum, rec) => sum + (rec.binsMalfunction || 0), 0);
+}
+
+// % defectuosos = binsMalfunction / (producidosOK + binsMalfunction) * 100
+// where producidosOK = sum(binsStatus[*].quantity) for all 4 sources.
+function defectuososPercent(records: ProductionRecord[]): number {
+  let producidosOk = 0;
+  let binsMalos = 0;
+  for (const rec of records) {
+    for (const b of rec.binsStatus || []) {
+      producidosOk += b.quantity || 0;
+    }
+    binsMalos += rec.binsMalfunction || 0;
+  }
+  const denom = producidosOk + binsMalos;
+  if (denom === 0) return 0;
+  return (binsMalos / denom) * 100;
+}
+
 // Helper to get the initial gas value for a record (first value in gasControl array)
 function getInitialGasValue(rec: ProductionRecord): number | null {
   if (rec.gasControl && rec.gasControl.length > 0) {
@@ -180,6 +215,9 @@ export {
   sumStock,
   sumGas,
   sumGasForWeek,
+  sumRecepcionadosKgs,
+  sumBinsMalos,
+  defectuososPercent,
   getInitialGasValue,
   calculateMonthlyGasConsumption,
 };
