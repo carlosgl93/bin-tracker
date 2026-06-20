@@ -330,9 +330,17 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
           boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}
       >
-        <Box display="flex" alignItems="center" mb={2}>
-          <WorkIcon sx={{ mr: 1 }} color="primary" />
-          <Typography variant="h6">Estado de Bins</Typography>
+        <Box display="flex" alignItems="center" mb={2} justifyContent="space-between">
+          <Box display="flex" alignItems="center">
+            <WorkIcon sx={{ mr: 1 }} color="primary" />
+            <Typography variant="h6">Estado de Bins</Typography>
+          </Box>
+          <Typography
+            variant="h5"
+            sx={{ fontStyle: 'italic', fontWeight: 300, color: 'primary.main' }}
+          >
+            700
+          </Typography>
         </Box>
         {/* Responsive container for Estado de Bins */}
         {isMobile ? (
@@ -346,7 +354,12 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 key={bin.source}
               >
                 <Typography color="text.secondary">{bin.source}:</Typography>
-                <Typography variant="h6">{bin.quantity}</Typography>
+                <Box textAlign="right">
+                  <Typography variant="h6">{bin.quantity}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((bin.quantity || 0) * 700)}
+                  </Typography>
+                </Box>
               </Box>
             ))}
             <Box
@@ -356,7 +369,12 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
               alignItems="center"
             >
               <Typography color="text.secondary">Bins Malos:</Typography>
-              <Typography variant="h6">{record.binsMalfunction}</Typography>
+              <Box textAlign="right">
+                <Typography variant="h6">{record.binsMalfunction}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  {formatNumberES((record.binsMalfunction || 0) * 700)}
+                </Typography>
+              </Box>
             </Box>
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -389,6 +407,13 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                         {bin.source}:
                       </Typography>
                       <Typography variant="h6">{bin.quantity}</Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontStyle: 'italic' }}
+                      >
+                        {formatNumberES((bin.quantity || 0) * 700)}
+                      </Typography>
                     </Box>
                   </Grid>
                 ))}
@@ -398,6 +423,13 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                       Bins Malos:
                     </Typography>
                     <Typography variant="h6">{record.binsMalfunction}</Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: 'italic' }}
+                    >
+                      {formatNumberES((record.binsMalfunction || 0) * 700)}
+                    </Typography>
                   </Box>
                 </Grid>
               </Grid>
