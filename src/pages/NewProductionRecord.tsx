@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 
@@ -20,10 +20,17 @@ import { FirebaseError } from 'firebase/app';
 
 import {
   createOrUpdateProductionRecordByDate,
+  getAllProductionRecords,
   getProductionRecordByDate,
 } from '@/services/production/productionRecords';
 import { BinKey, ProductionRecord } from '@/services/production/types';
 import { drumsToKgs } from '@/utils/conversionFactors';
+import {
+  WeeklyGasHistory,
+  getCurrentDayKey,
+  getWeeklyGasHistory,
+  hasPastDayWithoutData,
+} from '@/utils/gasHistory';
 
 const dias = [
   { label: 'Lunes', key: 'lunes' },
@@ -276,6 +283,26 @@ function NewProductionRecord() {
     enabled: !!fecha,
     refetchOnMount: true,
   });
+
+  // Fetch all records (used for weekly gas precarga, item 5)
+  const { data: allRecords = [] } = useQuery({
+    queryKey: ['allProductionRecords'],
+    queryFn: getAllProductionRecords,
+    refetchOnMount: true,
+  });
+
+  // Compute gas history for the week of `fecha`
+  const gasHistory: WeeklyGasHistory | null = useMemo(() => {
+    if (!fecha) return null;
+    return getWeeklyGasHistory(fecha, allRecords);
+  }, [fecha, allRecords]);
+
+  const currentDayKey = useMemo(() => (fecha ? getCurrentDayKey(fecha) : null), [fecha]);
+
+  const showGasLegend = useMemo(() => {
+    if (!fecha || !gasHistory) return false;
+    return hasPastDayWithoutData(fecha, gasHistory);
+  }, [fecha, gasHistory]);
 
   // Populate form fields if existingRecord changes
   useEffect(() => {
@@ -750,49 +777,93 @@ function NewProductionRecord() {
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Control de Gas Diario</Typography>
             <Grid container spacing={2} mt={1}>
-              {dias.map((dia, i) => (
-                <Grid item xs={12} md={2.4} key={dia.key}>
-                  <Typography fontWeight="bold">{dia.label}</Typography>
-                  <TextField
-                    label="Porcentaje"
-                    type="number"
-                    value={gas[i].porcentaje}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) {
-                        setGas(
-                          gas.map((item, idx) => (idx === i ? { ...item, porcentaje: val } : item)),
-                        );
-                      }
-                    }}
-                    fullWidth
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                      inputProps: { min: 0, step: 'any' },
-                    }}
-                    size="small"
-                    sx={{ mb: 1 }}
-                    placeholder=""
-                  />
-                  <TextField
-                    label="Valor"
-                    type="number"
-                    value={gas[i].valor}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) {
-                        setGas(
-                          gas.map((item, idx) => (idx === i ? { ...item, valor: val } : item)),
-                        );
-                      }
-                    }}
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0, step: 'any' }}
-                  />
-                </Grid>
-              ))}
+              {dias.map((dia, i) => {
+                const isCurrent = currentDayKey === dia.key;
+                const historyEntry = gasHistory?.[dia.key as keyof WeeklyGasHistory];
+
+                if (isCurrent) {
+                  return (
+                    <Grid item xs={12} md={2.4} key={dia.key}>
+                      <Typography fontWeight="bold">{dia.label}</Typography>
+                      <TextField
+                        label="Porcentaje"
+                        type="number"
+                        value={gas[i].porcentaje}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) {
+                            setGas(
+                              gas.map((item, idx) =>
+                                idx === i ? { ...item, porcentaje: val } : item,
+                              ),
+                            );
+                          }
+                        }}
+                        fullWidth
+                        InputProps={{
+                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                          inputProps: { min: 0, step: 'any' },
+                        }}
+                        size="small"
+                        sx={{ mb: 1 }}
+                        placeholder=""
+                      />
+                      <TextField
+                        label="Valor"
+                        type="number"
+                        value={gas[i].valor}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) {
+                            setGas(
+                              gas.map((item, idx) => (idx === i ? { ...item, valor: val } : item)),
+                            );
+                          }
+                        }}
+                        fullWidth
+                        size="small"
+                        inputProps={{ min: 0, step: 'any' }}
+                      />
+                    </Grid>
+                  );
+                }
+
+                return (
+                  <Grid item xs={12} md={2.4} key={dia.key}>
+                    <Typography fontWeight="bold" color="text.secondary">
+                      {dia.label}
+                    </Typography>
+                    {historyEntry?.hasData ? (
+                      <Stack spacing={0.5} mt={1}>
+                        <Typography variant="body2" color="text.secondary">
+                          {historyEntry.percentage}%
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {historyEntry.value}
+                        </Typography>
+                      </Stack>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        color="text.disabled"
+                        sx={{ mt: 1, fontStyle: 'italic' }}
+                      >
+                        N/I
+                      </Typography>
+                    )}
+                  </Grid>
+                );
+              })}
             </Grid>
+            {showGasLegend && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 2, display: 'block', fontStyle: 'italic' }}
+              >
+                N/I = No ingresado
+              </Typography>
+            )}
           </Paper>
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Comentarios</Typography>
