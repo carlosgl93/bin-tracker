@@ -456,6 +456,92 @@ function NewProductionRecord() {
           </Paper>
 
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2">Estado de Bins</Typography>
+            <Stack direction={'column'} gap={2} mt={2}>
+              {bins.map((b) => (
+                <Box key={b.key}>
+                  <TextField
+                    label={b.label}
+                    type="number"
+                    value={binsEstado[b.key as keyof typeof binsEstado]}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0)
+                        setBinsEstado((s) => ({ ...s, [b.key]: val }));
+                    }}
+                    fullWidth
+                    size="small"
+                    inputProps={{ min: 0 }}
+                  />
+                </Box>
+              ))}
+              <Box>
+                <TextField
+                  label="Bins Malos"
+                  type="number"
+                  value={binsEstado.malos}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0)
+                      setBinsEstado((s) => ({ ...s, malos: val }));
+                  }}
+                  fullWidth
+                  size="small"
+                  inputProps={{ min: 0 }}
+                />
+              </Box>
+            </Stack>
+            <Divider sx={{ my: 2 }} />
+            <Stack direction={'column'} spacing={2} mt={2}>
+              <Grid item xs={4}>
+                <TextField
+                  type="number"
+                  label="Total Existencia"
+                  value={
+                    ['inicio', 'chechito', 'donluis', 'otros'].every(
+                      (key) => binsEstado[key] === '',
+                    ) && binsEstado.malos === ''
+                      ? ''
+                      : adjustedTotalExistencia
+                  }
+                  fullWidth
+                  size="small"
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  label="Total Procesados"
+                  value={totalProcesados}
+                  fullWidth
+                  size="small"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) {
+                      setTotalProcesados(Number(val));
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  label="Total Final Proceso"
+                  value={
+                    ['inicio', 'chechito', 'donluis', 'otros'].every(
+                      (key) => binsEstado[key] === '',
+                    ) && totalProcesados === 0
+                      ? ''
+                      : totalFinal
+                  }
+                  fullWidth
+                  size="small"
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
+            </Stack>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Tambores y Horarios</Typography>
             <Typography variant="body2" mb={1}>
               Ingresa la cantidad por cada hora (09:00 - 21:00)
@@ -599,91 +685,6 @@ function NewProductionRecord() {
                   InputProps={{ readOnly: true }}
                 />
               </Box>
-            </Stack>
-          </Paper>
-          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2">Estado de Bins</Typography>
-            <Stack direction={'column'} gap={2} mt={2}>
-              {bins.map((b) => (
-                <Box key={b.key}>
-                  <TextField
-                    label={b.label}
-                    type="number"
-                    value={binsEstado[b.key as keyof typeof binsEstado]}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0)
-                        setBinsEstado((s) => ({ ...s, [b.key]: val }));
-                    }}
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0 }}
-                  />
-                </Box>
-              ))}
-              <Box>
-                <TextField
-                  label="Bins Malos"
-                  type="number"
-                  value={binsEstado.malos}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || Number(val) >= 0)
-                      setBinsEstado((s) => ({ ...s, malos: val }));
-                  }}
-                  fullWidth
-                  size="small"
-                  inputProps={{ min: 0 }}
-                />
-              </Box>
-            </Stack>
-            <Divider sx={{ my: 2 }} />
-            <Stack direction={'column'} spacing={2} mt={2}>
-              <Grid item xs={4}>
-                <TextField
-                  type="number"
-                  label="Total Existencia"
-                  value={
-                    ['inicio', 'chechito', 'donluis', 'otros'].every(
-                      (key) => binsEstado[key] === '',
-                    ) && binsEstado.malos === ''
-                      ? ''
-                      : adjustedTotalExistencia
-                  }
-                  fullWidth
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  label="Total Procesados"
-                  value={totalProcesados}
-                  fullWidth
-                  size="small"
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) {
-                      setTotalProcesados(Number(val));
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  label="Total Final Proceso"
-                  value={
-                    ['inicio', 'chechito', 'donluis', 'otros'].every(
-                      (key) => binsEstado[key] === '',
-                    ) && totalProcesados === 0
-                      ? ''
-                      : totalFinal
-                  }
-                  fullWidth
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
             </Stack>
           </Paper>
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
