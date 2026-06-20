@@ -26,6 +26,7 @@ import {
 
 import { ProductionRecord } from '@/services/production/types';
 import { formatDate, formatNumberES } from '@/utils';
+import { KG_PER_BIN } from '@/utils/conversionFactors';
 
 interface DailyViewProps {
   record?: ProductionRecord | null;
@@ -339,7 +340,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             variant="h5"
             sx={{ fontStyle: 'italic', fontWeight: 300, color: 'primary.main' }}
           >
-            700
+            {KG_PER_BIN}
           </Typography>
         </Box>
         {/* Responsive container for Estado de Bins */}
@@ -357,7 +358,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                 <Box textAlign="right">
                   <Typography variant="h6">{bin.quantity}</Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {formatNumberES((bin.quantity || 0) * 700)}
+                    {formatNumberES((bin.quantity || 0) * KG_PER_BIN)}
                   </Typography>
                 </Box>
               </Box>
@@ -372,7 +373,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
               <Box textAlign="right">
                 <Typography variant="h6">{record.binsMalfunction}</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  {formatNumberES((record.binsMalfunction || 0) * 700)}
+                  {formatNumberES((record.binsMalfunction || 0) * KG_PER_BIN)}
                 </Typography>
               </Box>
             </Box>
@@ -412,7 +413,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                         color="text.secondary"
                         sx={{ fontStyle: 'italic' }}
                       >
-                        {formatNumberES((bin.quantity || 0) * 700)}
+                        {formatNumberES((bin.quantity || 0) * KG_PER_BIN)}
                       </Typography>
                     </Box>
                   </Grid>
@@ -428,7 +429,7 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                       color="text.secondary"
                       sx={{ fontStyle: 'italic' }}
                     >
-                      {formatNumberES((record.binsMalfunction || 0) * 700)}
+                      {formatNumberES((record.binsMalfunction || 0) * KG_PER_BIN)}
                     </Typography>
                   </Box>
                 </Grid>

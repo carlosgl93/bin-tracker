@@ -23,6 +23,7 @@ import {
   getProductionRecordByDate,
 } from '@/services/production/productionRecords';
 import { BinKey, ProductionRecord } from '@/services/production/types';
+import { drumsToKgs } from '@/utils/conversionFactors';
 
 const dias = [
   { label: 'Lunes', key: 'lunes' },
@@ -364,7 +365,7 @@ function NewProductionRecord() {
         range,
         count: tambores[i] === '' ? 0 : Number(tambores[i]),
       })),
-      totalDrumsWeight: totalTambores * 240,
+      totalDrumsWeight: drumsToKgs(totalTambores),
       drumStock: {
         initial: stockTambores.inicial === '' ? 0 : Number(stockTambores.inicial),
         used: stockTambores.usados === '' ? 0 : Number(stockTambores.usados),
@@ -567,7 +568,7 @@ function NewProductionRecord() {
               ))}
             </Grid>
             <Stack direction="row" justifyContent="space-between" alignContent={'center'} mt={2}>
-              <Typography fontWeight="bold">{totalTambores * 240} Kgs</Typography>
+              <Typography fontWeight="bold">{drumsToKgs(totalTambores)} Kgs</Typography>
               <Typography fontWeight="bold">Total: {totalTambores}</Typography>
             </Stack>
           </Paper>

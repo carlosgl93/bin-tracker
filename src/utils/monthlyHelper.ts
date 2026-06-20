@@ -1,6 +1,7 @@
 import { eachWeekOfInterval, endOfMonth, format, getDate, parseISO, startOfMonth } from 'date-fns';
 
 import { ProductionRecord } from '@/services/production/types';
+import { drumsToKgs } from '@/utils/conversionFactors';
 
 function getWeekOfMonthISO(dateString: string) {
   // Parse date as local date to avoid timezone issues
@@ -251,7 +252,7 @@ export function calculateBusinessMonthlyTotals(
 
   return {
     totalDrums: sumDrums(allBusinessWeekRecords),
-    totalKgs: sumDrums(allBusinessWeekRecords) * 240,
+    totalKgs: drumsToKgs(sumDrums(allBusinessWeekRecords)),
     totalGasConsumption: calculateMonthlyGasConsumption(allBusinessWeekRecords),
     lastRecord:
       allBusinessWeekRecords.length > 0
@@ -291,7 +292,7 @@ export function calculateCalendarMonthlyTotals(
 
   return {
     totalDrums: sumDrums(monthlyRecords),
-    totalKgs: sumDrums(monthlyRecords) * 240,
+    totalKgs: drumsToKgs(sumDrums(monthlyRecords)),
     totalGasConsumption: calculateMonthlyGasConsumption(monthlyRecords),
     lastGasValue,
     lastGasPercentage,
@@ -315,7 +316,7 @@ export function weeklyProduction(
   week: string,
 ) {
   const weekTotalProducedDrumbs = sumDrums(weekRecords);
-  const weekTotalProducedKgs = weekTotalProducedDrumbs * 240;
+  const weekTotalProducedKgs = drumsToKgs(weekTotalProducedDrumbs);
   // const drumStock = sumStock(weekRecords, 'drumStock', 'final');
   const lastRecord = weekRecords[weekRecords.length - 1];
   const finalWeeklyDrumStock =

@@ -20,6 +20,7 @@ import { es } from 'date-fns/locale';
 
 import { ProductionRecord } from '@/services/production/types';
 import { formatNumberES } from '@/utils';
+import { drumsToKgs } from '@/utils/conversionFactors';
 
 interface WeeklyProductionCardProps {
   week: string;
@@ -95,8 +96,9 @@ export function WeeklyProductionCard({
             <Typography variant="caption">
               Kgs:{' '}
               {formatNumberES(
-                (record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) || 0) *
-                  240,
+                drumsToKgs(
+                  record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) || 0,
+                ),
               )}
             </Typography>
             <br />
@@ -228,7 +230,9 @@ export function WeeklyProductionCard({
           <Typography variant="caption">
             Kgs:{' '}
             {formatNumberES(
-              (record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) || 0) * 240,
+              drumsToKgs(
+                record.drumProductionByHour?.reduce((sum, h) => sum + (h.count || 0), 0) || 0,
+              ),
             )}
           </Typography>
           <br />
