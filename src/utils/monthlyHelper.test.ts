@@ -83,6 +83,24 @@ describe('sumDrums', () => {
     const rec = makeRecord('2026-06-02', 0, { drumProductionByHour: [] });
     expect(sumDrums([rec])).toBe(0);
   });
+
+  it('sums drums for a sabado record alongside weekday records', () => {
+    const records = [
+      makeRecord('2026-06-05', 0, {
+        // Fri
+        drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
+      }),
+      makeRecord('2026-06-06', 0, {
+        // Sabado
+        drumProductionByHour: [{ range: '09:00-10:00', count: 7 }],
+      }),
+      makeRecord('2026-06-08', 0, {
+        // Mon
+        drumProductionByHour: [{ range: '09:00-10:00', count: 4 }],
+      }),
+    ];
+    expect(sumDrums(records)).toBe(21);
+  });
 });
 
 describe('sumStock', () => {
@@ -412,6 +430,20 @@ describe('getWeekInfo', () => {
     expect(week1!.weekendDaysInTargetMonth).toHaveLength(2);
     expect(week1!.weekendDaysInTargetMonth).toContain('2026-06-06');
     expect(week1!.weekendDaysInTargetMonth).toContain('2026-06-07');
+  });
+
+  it('Sabado (Jun 6) is in weekendDaysInTargetMonth but NOT in businessDaysInTargetMonth', () => {
+    const info = getWeekInfo(5, 2026);
+    const week1 = info.find((w) => w.weekNumber === 1);
+    expect(week1!.weekendDaysInTargetMonth).toContain('2026-06-06');
+    expect(week1!.businessDaysInTargetMonth).not.toContain('2026-06-06');
+  });
+
+  it('businessDaysInTargetMonth stays at 5 days even when sabado exists', () => {
+    const info = getWeekInfo(5, 2026);
+    info.forEach((week) => {
+      expect(week.businessDaysInTargetMonth.length).toBeLessThanOrEqual(5);
+    });
   });
 });
 

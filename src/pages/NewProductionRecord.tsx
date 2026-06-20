@@ -30,6 +30,7 @@ const dias = [
   { label: 'Miércoles', key: 'miercoles' },
   { label: 'Jueves', key: 'jueves' },
   { label: 'Viernes', key: 'viernes' },
+  { label: 'Sabado', key: 'sabado' },
 ];
 const horas = [
   '09:00-10:00',
@@ -60,7 +61,7 @@ function getInitialFormState(record?: ProductionRecord) {
     fecha: record.date,
     horaInicio: record.startTime || '',
     horaFin: record.endTime || '',
-    gas: Array(5)
+    gas: Array(6)
       .fill(null)
       .map((_, i) => ({
         porcentaje: record.gasControl?.[i]?.percentage?.toString() ?? '',
@@ -148,7 +149,7 @@ function getEmptyFormState(date: string) {
     fecha: date,
     horaInicio: '',
     horaFin: '',
-    gas: Array(5).fill({ porcentaje: '', valor: '' }),
+    gas: Array(6).fill({ porcentaje: '', valor: '' }),
     tambores: Array(11).fill(''),
     stockTambores: { inicial: '', usados: '' },
     stockBolsas: { inicial: '', usadas: '', malas: '' },
@@ -185,6 +186,7 @@ function NewProductionRecord() {
   const [horaInicio, setHoraInicio] = useState('11:30');
   const [horaFin, setHoraFin] = useState('19:00');
   const [gas, setGas] = useState([
+    { porcentaje: '', valor: '' },
     { porcentaje: '', valor: '' },
     { porcentaje: '', valor: '' },
     { porcentaje: '', valor: '' },
