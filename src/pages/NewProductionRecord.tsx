@@ -42,6 +42,7 @@ const horas = [
   '16:00-17:00',
   '17:00-18:00',
   '18:00-19:00',
+  '20:00-21:00',
 ];
 
 const bins: { key: BinKey; label: string }[] = [
@@ -65,7 +66,7 @@ function getInitialFormState(record?: ProductionRecord) {
         porcentaje: record.gasControl?.[i]?.percentage?.toString() ?? '',
         valor: record.gasControl?.[i]?.value?.toString() ?? '',
       })),
-    tambores: Array(10)
+    tambores: Array(11)
       .fill(null)
       .map((_, i) => record.drumProductionByHour?.[i]?.count?.toString() ?? ''),
     stockTambores: {
@@ -148,7 +149,7 @@ function getEmptyFormState(date: string) {
     horaInicio: '',
     horaFin: '',
     gas: Array(5).fill({ porcentaje: '', valor: '' }),
-    tambores: Array(10).fill(''),
+    tambores: Array(11).fill(''),
     stockTambores: { inicial: '', usados: '' },
     stockBolsas: { inicial: '', usadas: '', malas: '' },
     binsEstado: {
@@ -190,7 +191,7 @@ function NewProductionRecord() {
     { porcentaje: '', valor: '' },
     { porcentaje: '', valor: '' },
   ]);
-  const [tambores, setTambores] = useState(Array(10).fill(''));
+  const [tambores, setTambores] = useState(Array(11).fill(''));
   const totalTambores = tambores.reduce((a, b) => a + (b === '' ? 0 : Number(b)), 0);
   const [totalProcesados, setTotalProcesados] = useState(0);
   const [stockTambores, setStockTambores] = useState({ inicial: '', usados: '' });
@@ -455,7 +456,7 @@ function NewProductionRecord() {
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Tambores y Horarios</Typography>
             <Typography variant="body2" mb={1}>
-              Ingresa la cantidad por cada hora (09:00 - 19:00)
+              Ingresa la cantidad por cada hora (09:00 - 21:00)
             </Typography>
             <Grid container spacing={2}>
               {horas.map((h, i) => (
