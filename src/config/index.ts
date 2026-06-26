@@ -1,10 +1,10 @@
-const title = 'React PWA';
+const title = 'Pulpa';
 
-const email = 'auther-email@gmail.com';
+const email = 'cgumucio93@gmail.com';
 
-const repository = 'https://github.com/suren-atoyan/react-pwa';
+const repository = 'https://github.com/carlosgl93/bin-tracker';
 
-const dateFormat = 'MMMM DD, YYYY';
+const dateFormat = 'DD, MM, YYYY';
 
 const loader = {
   // no more blinking in your app
@@ -13,8 +13,8 @@ const loader = {
 };
 
 const defaultMetaTags = {
-  image: '/cover.png',
-  description: 'Starter kit for modern web applications',
+  image: '/app-logo.png',
+  description: 'Seguimiento de producción de pulpa',
 };
 
 export { loader, dateFormat, repository, email, title, defaultMetaTags };

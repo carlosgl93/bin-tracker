@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 
@@ -20,14 +20,17 @@ import { FirebaseError } from 'firebase/app';
 
 import {
   createOrUpdateProductionRecordByDate,
+  getAllProductionRecords,
   getProductionRecordByDate,
 } from '@/services/production/productionRecords';
+import { BinKey, ProductionRecord } from '@/services/production/types';
+import { drumsToKgs } from '@/utils/conversionFactors';
 import {
-  BinKey,
-  DrumProductionByHour,
-  GasControl,
-  ProductionRecord,
-} from '@/services/production/types';
+  WeeklyGasHistory,
+  getCurrentDayKey,
+  getWeeklyGasHistory,
+  hasPastDayWithoutData,
+} from '@/utils/gasHistory';
 
 const dias = [
   { label: 'Lunes', key: 'lunes' },
@@ -35,6 +38,7 @@ const dias = [
   { label: 'Miércoles', key: 'miercoles' },
   { label: 'Jueves', key: 'jueves' },
   { label: 'Viernes', key: 'viernes' },
+  { label: 'Sabado', key: 'sabado' },
 ];
 const horas = [
   '09:00-10:00',
@@ -47,6 +51,7 @@ const horas = [
   '16:00-17:00',
   '17:00-18:00',
   '18:00-19:00',
+  '20:00-21:00',
 ];
 
 const bins: { key: BinKey; label: string }[] = [
@@ -64,14 +69,15 @@ function getInitialFormState(record?: ProductionRecord) {
     fecha: record.date,
     horaInicio: record.startTime || '',
     horaFin: record.endTime || '',
-    gas:
-      record.gasControl?.map((g: GasControl) => ({
-        porcentaje: g.percentage?.toString() ?? '',
-        valor: g.value?.toString() ?? '',
-      })) || [],
-    tambores:
-      record.drumProductionByHour?.map((d: DrumProductionByHour) => d.count?.toString() ?? '') ||
-      [],
+    gas: Array(6)
+      .fill(null)
+      .map((_, i) => ({
+        porcentaje: record.gasControl?.[i]?.percentage?.toString() ?? '',
+        valor: record.gasControl?.[i]?.value?.toString() ?? '',
+      })),
+    tambores: Array(11)
+      .fill(null)
+      .map((_, i) => record.drumProductionByHour?.[i]?.count?.toString() ?? ''),
     stockTambores: {
       inicial: record.drumStock?.initial?.toString() ?? '',
       usados: record.drumStock?.used?.toString() ?? '',
@@ -140,7 +146,6 @@ function normalizeProductionRecord(data: ProductionRecord): ProductionRecord {
       1: data.brix?.[1] ?? '',
       2: data.brix?.[2] ?? '',
       3: data.brix?.[3] ?? '',
-      average: data.brix?.average ?? '',
     },
     comments: data.comments ?? '',
   };
@@ -152,8 +157,8 @@ function getEmptyFormState(date: string) {
     fecha: date,
     horaInicio: '',
     horaFin: '',
-    gas: Array(5).fill({ porcentaje: '', valor: '' }),
-    tambores: Array(10).fill(''),
+    gas: Array(6).fill({ porcentaje: '', valor: '' }),
+    tambores: Array(11).fill(''),
     stockTambores: { inicial: '', usados: '' },
     stockBolsas: { inicial: '', usadas: '', malas: '' },
     binsEstado: {
@@ -167,6 +172,14 @@ function getEmptyFormState(date: string) {
     brixs: { 1: '', 2: '', 3: '' },
     comments: '',
   };
+}
+
+// Helper to convert Chilean decimal format (comma) to JavaScript decimal format (period)
+function parseChileanDecimal(value: string): number {
+  if (value === '') return 0;
+  // Replace comma with period for JavaScript number parsing
+  const normalizedValue = value.replace(',', '.');
+  return Number(normalizedValue);
 }
 
 function NewProductionRecord() {
@@ -186,8 +199,9 @@ function NewProductionRecord() {
     { porcentaje: '', valor: '' },
     { porcentaje: '', valor: '' },
     { porcentaje: '', valor: '' },
+    { porcentaje: '', valor: '' },
   ]);
-  const [tambores, setTambores] = useState(Array(10).fill(''));
+  const [tambores, setTambores] = useState(Array(11).fill(''));
   const totalTambores = tambores.reduce((a, b) => a + (b === '' ? 0 : Number(b)), 0);
   const [totalProcesados, setTotalProcesados] = useState(0);
   const [stockTambores, setStockTambores] = useState({ inicial: '', usados: '' });
@@ -216,7 +230,11 @@ function NewProductionRecord() {
   const totalExistencia = (
     ['inicio', 'chechito', 'donluis', 'otros'] as (keyof typeof binsEstado)[]
   ).reduce((acc, key) => Number(acc) + (binsEstado[key] === '' ? 0 : Number(binsEstado[key])), 0);
-  const totalFinal = Number(totalExistencia) - totalProcesados;
+
+  // Subtract bad bins from total existence
+  const adjustedTotalExistencia =
+    Number(totalExistencia) - (binsEstado.malos === '' ? 0 : Number(binsEstado.malos));
+  const totalFinal = adjustedTotalExistencia - totalProcesados;
 
   const mutation = useMutation({
     mutationFn: async (data: ProductionRecord) => {
@@ -265,6 +283,26 @@ function NewProductionRecord() {
     enabled: !!fecha,
     refetchOnMount: true,
   });
+
+  // Fetch all records (used for weekly gas precarga, item 5)
+  const { data: allRecords = [] } = useQuery({
+    queryKey: ['allProductionRecords'],
+    queryFn: getAllProductionRecords,
+    refetchOnMount: true,
+  });
+
+  // Compute gas history for the week of `fecha`
+  const gasHistory: WeeklyGasHistory | null = useMemo(() => {
+    if (!fecha) return null;
+    return getWeeklyGasHistory(fecha, allRecords);
+  }, [fecha, allRecords]);
+
+  const currentDayKey = useMemo(() => (fecha ? getCurrentDayKey(fecha) : null), [fecha]);
+
+  const showGasLegend = useMemo(() => {
+    if (!fecha || !gasHistory) return false;
+    return hasPastDayWithoutData(fecha, gasHistory);
+  }, [fecha, gasHistory]);
 
   // Populate form fields if existingRecord changes
   useEffect(() => {
@@ -340,7 +378,6 @@ function NewProductionRecord() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const brixAverage = (Number(brixs[1]) + Number(brixs[2]) + Number(brixs[3])) / 3;
 
     const data: ProductionRecord = {
       date: fecha,
@@ -355,7 +392,7 @@ function NewProductionRecord() {
         range,
         count: tambores[i] === '' ? 0 : Number(tambores[i]),
       })),
-      totalDrumsWeight: totalTambores * 240,
+      totalDrumsWeight: drumsToKgs(totalTambores),
       drumStock: {
         initial: stockTambores.inicial === '' ? 0 : Number(stockTambores.inicial),
         used: stockTambores.usados === '' ? 0 : Number(stockTambores.usados),
@@ -380,14 +417,13 @@ function NewProductionRecord() {
             : Number(binsEstado[b.key as keyof typeof binsEstado]),
       })),
       binsMalfunction: binsEstado.malos === '' ? 0 : Number(binsEstado.malos),
-      totalExistence: Number(totalExistencia),
+      totalExistence: adjustedTotalExistencia,
       totalProcessed: totalProcesados,
       totalFinal: totalFinal,
       brix: {
-        1: brixs[1] === '' ? 0 : Number(brixs[1]),
-        2: brixs[2] === '' ? 0 : Number(brixs[2]),
-        3: brixs[3] === '' ? 0 : Number(brixs[3]),
-        average: isNaN(brixAverage) ? 0 : brixAverage,
+        1: parseChileanDecimal(brixs[1]),
+        2: parseChileanDecimal(brixs[2]),
+        3: parseChileanDecimal(brixs[3]),
       },
       comments: comments.trim() || '',
     };
@@ -448,9 +484,95 @@ function NewProductionRecord() {
           </Paper>
 
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2">Estado de Bins</Typography>
+            <Stack direction={'column'} gap={2} mt={2}>
+              {bins.map((b) => (
+                <Box key={b.key}>
+                  <TextField
+                    label={b.label}
+                    type="number"
+                    value={binsEstado[b.key as keyof typeof binsEstado]}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0)
+                        setBinsEstado((s) => ({ ...s, [b.key]: val }));
+                    }}
+                    fullWidth
+                    size="small"
+                    inputProps={{ min: 0 }}
+                  />
+                </Box>
+              ))}
+              <Box>
+                <TextField
+                  label="Bins Malos"
+                  type="number"
+                  value={binsEstado.malos}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0)
+                      setBinsEstado((s) => ({ ...s, malos: val }));
+                  }}
+                  fullWidth
+                  size="small"
+                  inputProps={{ min: 0 }}
+                />
+              </Box>
+            </Stack>
+            <Divider sx={{ my: 2 }} />
+            <Stack direction={'column'} spacing={2} mt={2}>
+              <Grid item xs={4}>
+                <TextField
+                  type="number"
+                  label="Total Existencia"
+                  value={
+                    ['inicio', 'chechito', 'donluis', 'otros'].every(
+                      (key) => binsEstado[key] === '',
+                    ) && binsEstado.malos === ''
+                      ? ''
+                      : adjustedTotalExistencia
+                  }
+                  fullWidth
+                  size="small"
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  label="Total Procesados"
+                  value={totalProcesados}
+                  fullWidth
+                  size="small"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) {
+                      setTotalProcesados(Number(val));
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  label="Total Final Proceso"
+                  value={
+                    ['inicio', 'chechito', 'donluis', 'otros'].every(
+                      (key) => binsEstado[key] === '',
+                    ) && totalProcesados === 0
+                      ? ''
+                      : totalFinal
+                  }
+                  fullWidth
+                  size="small"
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
+            </Stack>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Tambores y Horarios</Typography>
             <Typography variant="body2" mb={1}>
-              Ingresa la cantidad por cada hora (09:00 - 19:00)
+              Ingresa la cantidad por cada hora (09:00 - 21:00)
             </Typography>
             <Grid container spacing={2}>
               {horas.map((h, i) => (
@@ -473,7 +595,7 @@ function NewProductionRecord() {
               ))}
             </Grid>
             <Stack direction="row" justifyContent="space-between" alignContent={'center'} mt={2}>
-              <Typography fontWeight="bold">{totalTambores * 240} Kgs</Typography>
+              <Typography fontWeight="bold">{drumsToKgs(totalTambores)} Kgs</Typography>
               <Typography fontWeight="bold">Total: {totalTambores}</Typography>
             </Stack>
           </Paper>
@@ -594,133 +716,60 @@ function NewProductionRecord() {
             </Stack>
           </Paper>
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2">Estado de Bins</Typography>
-            <Stack direction={'column'} gap={2} mt={2}>
-              {bins.map((b) => (
-                <Box key={b.key}>
-                  <TextField
-                    label={b.label}
-                    type="number"
-                    value={binsEstado[b.key as keyof typeof binsEstado]}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0)
-                        setBinsEstado((s) => ({ ...s, [b.key]: val }));
-                    }}
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0 }}
-                  />
-                </Box>
-              ))}
-              <Box>
-                <TextField
-                  label="Bins Malos"
-                  type="number"
-                  value={binsEstado.malos}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || Number(val) >= 0)
-                      setBinsEstado((s) => ({ ...s, malos: val }));
-                  }}
-                  fullWidth
-                  size="small"
-                  inputProps={{ min: 0 }}
-                />
-              </Box>
-            </Stack>
-            <Divider sx={{ my: 2 }} />
-            <Stack direction={'column'} spacing={2} mt={2}>
-              <Grid item xs={4}>
-                <TextField
-                  type="number"
-                  label="Total Existencia"
-                  value={
-                    ['inicio', 'chechito', 'donluis', 'otros'].every(
-                      (key) => binsEstado[key] === '',
-                    )
-                      ? ''
-                      : totalExistencia
-                  }
-                  fullWidth
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  label="Total Procesados"
-                  value={totalProcesados}
-                  fullWidth
-                  size="small"
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) {
-                      setTotalProcesados(Number(val));
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  label="Total Final Proceso"
-                  value={
-                    ['inicio', 'chechito', 'donluis', 'otros'].every(
-                      (key) => binsEstado[key] === '',
-                    ) && totalProcesados === 0
-                      ? ''
-                      : totalFinal
-                  }
-                  fullWidth
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-            </Stack>
-          </Paper>
-          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Brixs</Typography>
             <Stack direction={'column'} spacing={2} mt={2}>
               <Box>
                 <TextField
                   label="1"
-                  type="number"
+                  type="text"
                   value={brixs[1]}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 1: val }));
+                    // Allow empty string, numbers, commas, and periods
+                    // eslint-disable-next-line no-useless-escape
+                    if (val === '' || /^[\d,\.]*$/.test(val)) {
+                      setBrixs((b) => ({ ...b, 1: val }));
+                    }
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  placeholder="Ej: 14,2"
                 />
               </Box>
               <Box>
                 <TextField
                   label="2"
-                  type="number"
+                  type="text"
                   value={brixs[2]}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 2: val }));
+                    // Allow empty string, numbers, commas, and periods
+                    // eslint-disable-next-line no-useless-escape
+                    if (val === '' || /^[\d,\.]*$/.test(val)) {
+                      setBrixs((b) => ({ ...b, 2: val }));
+                    }
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  placeholder="Ej: 14,2"
                 />
               </Box>
               <Box>
                 <TextField
                   label="3"
-                  type="number"
+                  type="text"
                   value={brixs[3]}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) setBrixs((b) => ({ ...b, 3: val }));
+                    // Allow empty string, numbers, commas, and periods
+                    // eslint-disable-next-line no-useless-escape
+                    if (val === '' || /^[\d,\.]*$/.test(val)) {
+                      setBrixs((b) => ({ ...b, 3: val }));
+                    }
                   }}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  placeholder="Ej: 14,2"
                 />
               </Box>
             </Stack>
@@ -728,45 +777,93 @@ function NewProductionRecord() {
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Control de Gas Diario</Typography>
             <Grid container spacing={2} mt={1}>
-              {dias.map((dia, i) => (
-                <Grid item xs={12} md={2.4} key={dia.key}>
-                  <Typography fontWeight="bold">{dia.label}</Typography>
-                  <TextField
-                    label="Porcentaje"
-                    type="number"
-                    value={gas[i].porcentaje}
-                    onChange={(e) => {
-                      const v = [...gas];
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) v[i].porcentaje = val;
-                      setGas(v);
-                    }}
-                    fullWidth
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                      inputProps: { min: 0, step: 'any' },
-                    }}
-                    size="small"
-                    sx={{ mb: 1 }}
-                    placeholder=""
-                  />
-                  <TextField
-                    label="Valor"
-                    type="number"
-                    value={gas[i].valor}
-                    onChange={(e) => {
-                      const v = [...gas];
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) v[i].valor = val;
-                      setGas(v);
-                    }}
-                    fullWidth
-                    size="small"
-                    inputProps={{ min: 0, step: 'any' }}
-                  />
-                </Grid>
-              ))}
+              {dias.map((dia, i) => {
+                const isCurrent = currentDayKey === dia.key;
+                const historyEntry = gasHistory?.[dia.key as keyof WeeklyGasHistory];
+
+                if (isCurrent) {
+                  return (
+                    <Grid item xs={12} md={2.4} key={dia.key}>
+                      <Typography fontWeight="bold">{dia.label}</Typography>
+                      <TextField
+                        label="Porcentaje"
+                        type="number"
+                        value={gas[i].porcentaje}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) {
+                            setGas(
+                              gas.map((item, idx) =>
+                                idx === i ? { ...item, porcentaje: val } : item,
+                              ),
+                            );
+                          }
+                        }}
+                        fullWidth
+                        InputProps={{
+                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                          inputProps: { min: 0, step: 'any' },
+                        }}
+                        size="small"
+                        sx={{ mb: 1 }}
+                        placeholder=""
+                      />
+                      <TextField
+                        label="Valor"
+                        type="number"
+                        value={gas[i].valor}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) {
+                            setGas(
+                              gas.map((item, idx) => (idx === i ? { ...item, valor: val } : item)),
+                            );
+                          }
+                        }}
+                        fullWidth
+                        size="small"
+                        inputProps={{ min: 0, step: 'any' }}
+                      />
+                    </Grid>
+                  );
+                }
+
+                return (
+                  <Grid item xs={12} md={2.4} key={dia.key}>
+                    <Typography fontWeight="bold" color="text.secondary">
+                      {dia.label}
+                    </Typography>
+                    {historyEntry?.hasData ? (
+                      <Stack spacing={0.5} mt={1}>
+                        <Typography variant="body2" color="text.secondary">
+                          {historyEntry.percentage}%
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {historyEntry.value}
+                        </Typography>
+                      </Stack>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        color="text.disabled"
+                        sx={{ mt: 1, fontStyle: 'italic' }}
+                      >
+                        N/I
+                      </Typography>
+                    )}
+                  </Grid>
+                );
+              })}
             </Grid>
+            {showGasLegend && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 2, display: 'block', fontStyle: 'italic' }}
+              >
+                N/I = No ingresado
+              </Typography>
+            )}
           </Paper>
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Comentarios</Typography>

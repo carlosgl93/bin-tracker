@@ -15,7 +15,7 @@ function AppErrorBoundaryFallback() {
       <FullSizeCentered>
         <Paper sx={{ p: 5 }}>
           <Typography variant="h5" component="h3">
-            Sorry, I guess, something went wrong. You can:
+            Oops, algo salió mal
           </Typography>
           <Button
             startIcon={<EmailIcon />}

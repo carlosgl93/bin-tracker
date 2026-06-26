@@ -3,13 +3,13 @@
   "version": "3.0.0",
   "type": "module",
   "description": "Bin Tracker - A PWA for tracking pulp production",
-  "homepage": "https://pulpa.surenatoyan.com/",
+  "homepage": "https://bintracer-fd72d.web.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/suren-atoyan/pulpa.git"
+    "url": "https://github.com/carlosgl93/bin-tracker"
   },
   "bugs": {
-    "url": "https://github.com/suren-atoyan/pulpa/issues",
+    "url": "https://github.com/carlosgl93/bin-tracker/issues",
     "email": "cgumucio93@gmail.com"
   },
   "license": "MIT",
@@ -23,18 +23,22 @@
     "lint:check": "eslint --max-warnings=0 \"src/**/*.{js,jsx,ts,tsx,json}\"",
     "ts:check": "tsc --noEmit",
     "test:unit": "vitest src",
+    "test:unit:run": "vitest run src",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "emulators": "firebase emulators:start --only firestore",
-    "deploy": "pnpm run build && firebase deploy --only hosting"
+    "deploy": "pnpm run build && pnpm run test:unit:run && firebase deploy --only hosting && curl -X PURGE https://bintracer-fd72d.web.app/*",
+    "create:test:records": "npx tsx ./scripts/createRecords.ts",
+    "seed-db": "pnpm run create:test:records"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.6",
-    "@mui/material": "^6.4.6",
+    "@mui/material": "^6.4.12",
     "@mui/system": "^7.1.1",
     "@mui/utils": "^7.1.1",
+    "@mui/x-date-pickers": "^8.5.3",
     "@tanstack/react-query": "^5.80.7",
     "@toolpad/core": "^0.12.1",
     "date-fns": "^4.1.0",
@@ -46,6 +50,8 @@
     "react-hotkeys-hook": "^4.6.1",
     "react-router": "^7.2.0",
     "react-toastify": "^11.0.5",
+    "recharts": "^3.8.1",
+    "ts-node": "^10.9.2",
     "usehooks-ts": "^3.1.1"
   },
   "devDependencies": {
@@ -56,6 +62,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "3.2.3",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.19",
