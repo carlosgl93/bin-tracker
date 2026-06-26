@@ -61,8 +61,8 @@ function MonthlyView() {
         totalDrums: 0,
         totalKgs: 0,
         totalGasConsumption: 0,
-        lastGasValue: 0,
-        lastGasPercentage: 0,
+        lastGasValue: null,
+        lastGasPercentage: null,
         lastRecord: null,
       };
     const targetMonth = month.getMonth(); // 0-based
@@ -72,8 +72,8 @@ function MonthlyView() {
 
   const monthlyTotalDrums = calendarMonthlyTotals.totalDrums;
   const monthlyTotalKgs = calendarMonthlyTotals.totalKgs;
-  const lastGasValue = calendarMonthlyTotals.lastGasValue ?? 0;
-  const lastGasPercentage = calendarMonthlyTotals.lastGasPercentage ?? 0;
+  const lastGasValue: number | null = calendarMonthlyTotals.lastGasValue;
+  const lastGasPercentage: number | null = calendarMonthlyTotals.lastGasPercentage;
   const lastRecord = calendarMonthlyTotals.lastRecord;
   const lastDrumStockTotal = lastRecord?.drumStock?.total ?? 0;
   const lastBagStockTotal = lastRecord?.bagStock?.total ?? 0;
@@ -115,6 +115,7 @@ function MonthlyView() {
             Object.entries(weeks).map(([week, weekRecords]) => {
               const {
                 gas,
+                gasPercentage,
                 dateRange,
                 countCurrentWeekWithProduction,
                 totalFinalBagStock,
@@ -133,6 +134,7 @@ function MonthlyView() {
                   finalWeeklyDrumStock={finalWeeklyDrumStock}
                   totalFinalBagStock={totalFinalBagStock}
                   gas={gas}
+                  gasPercentage={gasPercentage}
                   daysWithProduction={countCurrentWeekWithProduction}
                   weekRecords={weekRecords}
                   currentWeekInfo={
@@ -213,7 +215,7 @@ function MonthlyView() {
               Último valor registrado
             </Typography>
             <Typography variant="h6" align="center">
-              {formatNumberES(lastGasPercentage)}
+              {lastGasValue == null ? 'No ingresado' : formatNumberES(lastGasValue)}
             </Typography>
           </Paper>
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
@@ -224,7 +226,7 @@ function MonthlyView() {
               Último porcentaje registrado
             </Typography>
             <Typography variant="h6" align="center">
-              {formatNumberES(lastGasValue)}%
+              {lastGasPercentage == null ? 'No ingresado' : `${formatNumberES(lastGasPercentage)}%`}
             </Typography>
           </Paper>
         </Stack>

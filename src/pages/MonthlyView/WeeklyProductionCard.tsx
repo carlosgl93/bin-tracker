@@ -20,7 +20,7 @@ import { es } from 'date-fns/locale';
 
 import { ProductionRecord } from '@/services/production/types';
 import { formatNumberES } from '@/utils';
-import { drumsToKgs } from '@/utils/conversionFactors';
+import { binsToKgs, drumsToKgs } from '@/utils/conversionFactors';
 import { defectuososPercent, sumBinsMalos, sumRecepcionadosKgs } from '@/utils/monthlyHelper';
 
 interface WeeklyProductionCardProps {
@@ -30,7 +30,8 @@ interface WeeklyProductionCardProps {
   weekTotalProducedKgs: number;
   finalWeeklyDrumStock: number;
   totalFinalBagStock: number;
-  gas: number;
+  gas: number | null;
+  gasPercentage: number | null;
   daysWithProduction: number;
   weekRecords: ProductionRecord[];
   currentWeekInfo: {
@@ -51,6 +52,7 @@ export function WeeklyProductionCard({
   finalWeeklyDrumStock,
   totalFinalBagStock,
   gas,
+  gasPercentage,
   daysWithProduction,
   weekRecords,
   currentWeekInfo,
@@ -131,6 +133,8 @@ export function WeeklyProductionCard({
               <thead>
                 <tr>
                   <th>Bins</th>
+                  <th />
+                  <th>kgs</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,11 +146,35 @@ export function WeeklyProductionCard({
                     <td>
                       <Typography variant="caption">{b.quantity}</Typography>
                     </td>
+                    <td>
+                      <Typography variant="caption">
+                        {formatNumberES(binsToKgs(b.quantity || 0))}
+                      </Typography>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {/* <Typography variant="caption">Brixs: {record.brix.}</Typography> */}
+            <br />
+            <Typography variant="caption">
+              Bins Malos: {record.binsMalfunction} /{' '}
+              {formatNumberES(binsToKgs(record.binsMalfunction || 0))}
+            </Typography>
+            <br />
+            <Typography variant="caption">
+              Total Existencia: {formatNumberES(record.totalExistence || 0)} /{' '}
+              {formatNumberES(binsToKgs(record.totalExistence || 0))}
+            </Typography>
+            <br />
+            <Typography variant="caption">
+              Total Procesados: {formatNumberES(record.totalProcessed || 0)} /{' '}
+              {formatNumberES(binsToKgs(record.totalProcessed || 0))}
+            </Typography>
+            <br />
+            <Typography variant="caption">
+              Total Final Proceso: {formatNumberES(record.totalFinal || 0)} /{' '}
+              {formatNumberES(binsToKgs(record.totalFinal || 0))}
+            </Typography>
             <br />
             <Typography variant="caption">
               {`Gas: ${record.gasControl.reduce((sum, g) => sum + g.percentage, 0)}% ${record.gasControl?.reduce((sum, g) => sum + (g.value || 0), 0) || 0}`}
@@ -406,8 +434,22 @@ export function WeeklyProductionCard({
             <Typography variant="body1" color="text.secondary">
               Gas (valor)
             </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Último valor registrado
+            </Typography>
             <Typography variant="h6" align="center">
-              {formatNumberES(gas)}
+              {gas == null ? 'No ingresado' : formatNumberES(gas)}
+            </Typography>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(232,245,253,0.6)', borderRadius: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              Gas (%)
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Último porcentaje registrado
+            </Typography>
+            <Typography variant="h6" align="center">
+              {gasPercentage == null ? 'No ingresado' : `${formatNumberES(gasPercentage)}%`}
             </Typography>
           </Paper>
         </Stack>

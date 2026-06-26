@@ -459,8 +459,8 @@ describe('calculateCalendarMonthlyTotals', () => {
     expect(result.totalDrums).toBe(0);
     expect(result.totalKgs).toBe(0);
     expect(result.totalGasConsumption).toBe(0);
-    expect(result.lastGasValue).toBe(0);
-    expect(result.lastGasPercentage).toBe(0);
+    expect(result.lastGasValue).toBeNull();
+    expect(result.lastGasPercentage).toBeNull();
     expect(result.lastRecord).toBeNull();
   });
 
@@ -531,6 +531,48 @@ describe('calculateCalendarMonthlyTotals', () => {
     const records = [makeRecord('2026-06-01', 5), makeRecord('2026-06-10', 3)];
     const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
     expect(result.lastRecord?.date).toBe('2026-06-10');
+  });
+
+  it('lastGas reads weekday key from last record, not slot [0]', () => {
+    // Regression: last record is Friday June 26. Reading gasControl[0]
+    // (lunes) returns 0. Correct value is in slot [4] (Viernes).
+    const records = [
+      makeRecord('2026-06-01', 0, {
+        gasControl: [{ day: 'Lunes', value: 100, percentage: 50 }],
+      }),
+      makeRecord('2026-06-26', 0, {
+        gasControl: [
+          { day: 'Lunes', value: 0, percentage: 0 },
+          { day: 'Martes', value: 0, percentage: 0 },
+          { day: 'Miércoles', value: 0, percentage: 0 },
+          { day: 'Jueves', value: 0, percentage: 0 },
+          { day: 'Viernes', value: 59558, percentage: 80 },
+        ],
+      }),
+    ];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.lastGasValue).toBe(59558);
+    expect(result.lastGasPercentage).toBe(80);
+  });
+
+  it('lastGas is null when last day slot is the 0/0 default (Saturday etc.)', () => {
+    // Real-world: Saturday wasn't implemented in older records — all 6 slots
+    // exist with 0/0. Must NOT surface as 0; treated as no data.
+    const records = [
+      makeRecord('2026-06-27', 0, {
+        gasControl: [
+          { day: 'Lunes', value: 0, percentage: 0 },
+          { day: 'Martes', value: 0, percentage: 0 },
+          { day: 'Miércoles', value: 0, percentage: 0 },
+          { day: 'Jueves', value: 0, percentage: 0 },
+          { day: 'Viernes', value: 0, percentage: 0 },
+          { day: 'Sabado', value: 0, percentage: 0 },
+        ],
+      }),
+    ];
+    const result = calculateCalendarMonthlyTotals(records, MONTH, YEAR);
+    expect(result.lastGasValue).toBeNull();
+    expect(result.lastGasPercentage).toBeNull();
   });
 });
 
@@ -714,13 +756,13 @@ describe('weeklyProduction', () => {
         drumProductionByHour: [{ range: '09:00-10:00', count: 10 }],
         drumStock: { initial: 100, used: 10, total: 90 },
         bagStock: { initial: 50, used: 5, damaged: 0, total: 45 },
-        gasControl: [{ day: '2026-06-01', value: 300, percentage: 80 }],
+        gasControl: [{ day: 'lunes', value: 300, percentage: 80 }],
       }),
       makeRecord('2026-06-02', 0, {
         drumProductionByHour: [{ range: '09:00-10:00', count: 5 }],
         drumStock: { initial: 90, used: 5, total: 85 },
         bagStock: { initial: 45, used: 3, damaged: 0, total: 42 },
-        gasControl: [{ day: '2026-06-02', value: 280, percentage: 75 }],
+        gasControl: [{ day: 'martes', value: 280, percentage: 75 }],
       }),
     ];
     const result = weeklyProduction(weekRecords, weekInfo, '1');
@@ -733,18 +775,19 @@ describe('weeklyProduction', () => {
       makeRecord('2026-06-01', 0, {
         drumStock: { initial: 100, used: 10, total: 90 },
         bagStock: { initial: 50, used: 5, damaged: 0, total: 45 },
-        gasControl: [{ day: '2026-06-01', value: 300, percentage: 80 }],
+        gasControl: [{ day: 'Lunes', value: 300, percentage: 80 }],
       }),
       makeRecord('2026-06-05', 0, {
         drumStock: { initial: 90, used: 5, total: 85 },
         bagStock: { initial: 45, used: 3, damaged: 0, total: 42 },
-        gasControl: [{ day: '2026-06-05', value: 270, percentage: 70 }],
+        gasControl: [{ day: 'Viernes', value: 270, percentage: 70 }],
       }),
     ];
     const result = weeklyProduction(weekRecords, weekInfo, '1');
     expect(result.finalWeeklyDrumStock).toBe(85);
     expect(result.totalFinalBagStock).toBe(42);
     expect(result.gas).toBe(270);
+    expect(result.gasPercentage).toBe(70);
   });
 
   it('countCurrentWeekWithProduction equals number of records', () => {
@@ -763,10 +806,84 @@ describe('weeklyProduction', () => {
     expect(result.currentWeekInfo?.weekNumber).toBe(1);
   });
 
-  it('gas is 0 when last record has no gasControl', () => {
+  it('gas is null when last record has no gasControl', () => {
     const weekRecords = [makeRecord('2026-06-01', 5, { gasControl: [] })];
     const result = weeklyProduction(weekRecords, weekInfo, '1');
-    expect(result.gas).toBe(0);
+    expect(result.gas).toBeNull();
+    expect(result.gasPercentage).toBeNull();
+  });
+
+  it('gas pulls value+percentage from the last worked day slot, not slot [0]', () => {
+    // Regression: last record is Friday. Production stores `day` as the
+    // WEEKDAY LABEL ('Viernes', 'Miércoles') — capitalized + accented. Match
+    // must normalize both sides (lowercase + strip diacritics).
+    const weekRecords = [
+      makeRecord('2026-06-01', 0, {
+        gasControl: [{ day: 'Lunes', value: 300, percentage: 80 }],
+      }),
+      makeRecord('2026-06-05', 0, {
+        gasControl: [
+          { day: 'Lunes', value: 0, percentage: 0 },
+          { day: 'Martes', value: 0, percentage: 0 },
+          { day: 'Miércoles', value: 0, percentage: 0 },
+          { day: 'Jueves', value: 0, percentage: 0 },
+          { day: 'Viernes', value: 270, percentage: 70 },
+        ],
+      }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.gas).toBe(270);
+    expect(result.gasPercentage).toBe(70);
+  });
+
+  it('gas is null when last record is a Sunday (no slot in 6-entry model)', () => {
+    // 2026-06-07 is Sunday — getDay returns 0, which has no slot.
+    const weekRecords = [
+      makeRecord('2026-06-01', 0, {
+        gasControl: [{ day: 'Lunes', value: 300, percentage: 80 }],
+      }),
+      makeRecord('2026-06-07', 0, { gasControl: [] }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.gas).toBeNull();
+    expect(result.gasPercentage).toBeNull();
+  });
+
+  it('gas is null when slot exists but value=0 and percentage=0 (default/never entered)', () => {
+    // Real-world: Saturday records have all 6 slots filled with 0/0 because
+    // Saturday wasn't implemented when older records were saved. Must NOT be
+    // displayed as 0 — treat as "No ingresado".
+    const weekRecords = [
+      makeRecord('2026-06-01', 0, {
+        gasControl: [{ day: 'Lunes', value: 300, percentage: 80 }],
+      }),
+      makeRecord('2026-06-06', 0, {
+        gasControl: [
+          { day: 'Lunes', value: 0, percentage: 0 },
+          { day: 'Martes', value: 0, percentage: 0 },
+          { day: 'Miércoles', value: 0, percentage: 0 },
+          { day: 'Jueves', value: 0, percentage: 0 },
+          { day: 'Viernes', value: 0, percentage: 0 },
+          { day: 'Sabado', value: 0, percentage: 0 },
+        ],
+      }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.gas).toBeNull();
+    expect(result.gasPercentage).toBeNull();
+  });
+
+  it('gas shows real value when only one of value/percentage is > 0', () => {
+    // Defensive: a partial entry (value>0 but pct=0, or vice versa) is still
+    // a real registration and should be displayed.
+    const weekRecords = [
+      makeRecord('2026-06-05', 0, {
+        gasControl: [{ day: 'Viernes', value: 100, percentage: 0 }],
+      }),
+    ];
+    const result = weeklyProduction(weekRecords, weekInfo, '1');
+    expect(result.gas).toBe(100);
+    expect(result.gasPercentage).toBe(0);
   });
 
   it('finalWeeklyDrumStock is 0 when last record has zero drumStock total', () => {

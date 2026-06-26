@@ -2,6 +2,43 @@ import { eachWeekOfInterval, endOfMonth, format, getDate, parseISO, startOfMonth
 
 import { ProductionRecord } from '@/services/production/types';
 import { binsToKgs, drumsToKgs } from '@/utils/conversionFactors';
+import { getCurrentDayKey } from '@/utils/gasHistory';
+
+// Normalize a weekday label so 'Miércoles' / 'SÁBADO' / 'sabado' all compare
+// equal to the canonical key returned by getCurrentDayKey ('miercoles',
+// 'sabado'). Lowercases and strips combining diacritics.
+function normalizeWeekdayLabel(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+// Extract the last gas value + percentage for the given record's weekday.
+// Returns null for both when no real data exists. Mirrors the weekday-label
+// model produced by NewProductionRecord (e.g. day: 'Viernes'), with a
+// fallback to the legacy single-entry model (day: 'yyyy-MM-dd'). A slot
+// counts as "no data" when both value and percentage are 0/null.
+function extractLastGas(record: ProductionRecord | null | undefined): {
+  value: number | null;
+  percentage: number | null;
+} {
+  if (!record || !Array.isArray(record.gasControl) || record.gasControl.length === 0) {
+    return { value: null, percentage: null };
+  }
+  const dayKey = getCurrentDayKey(record.date);
+  let matches =
+    dayKey !== 'domingo'
+      ? record.gasControl.filter((g) => g?.day && normalizeWeekdayLabel(g.day) === dayKey)
+      : [];
+  if (matches.length === 0) {
+    matches = record.gasControl.filter((g) => g?.day === record.date);
+  }
+  const entry = matches[matches.length - 1];
+  if (!entry) return { value: null, percentage: null };
+  const entryValue = entry.value != null && entry.value !== '' ? Number(entry.value) : null;
+  const entryPct =
+    entry.percentage != null && entry.percentage !== '' ? Number(entry.percentage) : null;
+  const hasData = (entryValue != null && entryValue > 0) || (entryPct != null && entryPct > 0);
+  return hasData ? { value: entryValue, percentage: entryPct } : { value: null, percentage: null };
+}
 
 function getWeekOfMonthISO(dateString: string) {
   // Parse date as local date to avoid timezone issues
@@ -315,18 +352,15 @@ export function calculateCalendarMonthlyTotals(
     return recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear;
   });
 
-  // Find the last record with gas data for gas KPIs
-  const recordsWithGas = monthlyRecords.filter(
-    (rec) => rec.gasControl && rec.gasControl.length > 0,
-  );
+  // Find the last record in the month — used for gas KPIs. We always pick the
+  // chronologically last record (real entries have gas filled; default 0/0
+  // slots return null via extractLastGas so the UI can render "No ingresado").
   const lastGasRecord =
-    recordsWithGas.length > 0
-      ? [...recordsWithGas].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+    monthlyRecords.length > 0
+      ? [...monthlyRecords].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
       : null;
 
-  // Get the last gas values (not sum, just the last recorded values)
-  const lastGasValue = lastGasRecord?.gasControl?.[0]?.value ?? 0;
-  const lastGasPercentage = lastGasRecord?.gasControl?.[0]?.percentage ?? 0;
+  const { value: lastGasValue, percentage: lastGasPercentage } = extractLastGas(lastGasRecord);
 
   return {
     totalDrums: sumDrums(monthlyRecords),
@@ -362,11 +396,7 @@ export function weeklyProduction(
   // const bagStock = sumStock(weekRecords, 'bagStock', 'final');
   const totalFinalBagStock =
     weekRecords.length > 0 && lastRecord.bagStock ? lastRecord.bagStock.total : 0;
-  // Use the last record's gasControl value for the week (usually Friday)
-  const gas =
-    lastRecord && lastRecord.gasControl && lastRecord.gasControl.length > 0
-      ? lastRecord.gasControl[0].value
-      : 0;
+  const { value: gas, percentage: gasPercentage } = extractLastGas(lastRecord);
 
   // Find the corresponding week info for date display
   const currentWeekInfo = weekInfo.find((w) => w.weekNumber === parseInt(week));
@@ -381,6 +411,7 @@ export function weeklyProduction(
   // const countDaysWithProduction =
   return {
     gas,
+    gasPercentage,
     dateRange,
     countCurrentWeekWithProduction,
     totalFinalBagStock,
