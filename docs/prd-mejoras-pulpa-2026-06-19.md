@@ -413,4 +413,49 @@ Centralizar en un helper `src/utils/conversionFactors.ts` con constantes `KG_PER
 
 ---
 
-_PRD v1 · 19-06-2026 · spec-driven, 4 fases, 22h estimadas_
+---
+
+## 16. Follow-ups detectados en v3.1.0 (v3.1.2)
+
+Bugs y gaps detectados tras validar v3.1.0 en ambiente dev con data real de Firebase. Mantener spec-driven: este PRD sigue siendo source of truth.
+
+### Ítem 13 — Bug `getWeeklyGasHistory` + integración DailyView
+
+**Origen:** durante validación manual el operador (Sebastián) abrió el form de un viernes y solo Lunes mostraba valor real (35%, 59055); Martes a Jueves salían en 0% / 0; Sábado en `N/I`. El ítem 5 (gas precarga semanal) se marcó como "done" pero el modelo de datos nunca se pensó para que cada doc guardara 6 días en `gasControl`. La precarga funciona, pero la lectura estaba rota.
+
+**Root cause:** `src/utils/gasHistory.ts:59` lee `record.gasControl?.[0]` siempre. La realidad es que el doc de Martes guarda el dato real en `gasControl[1]` (índice del día), no en `[0]`. Por eso solo Lunes (idx 0) aparece poblado; el resto de días siempre lee el slot Lunes que, si no hay registro Lunes, queda vacío.
+
+**Gap adicional:** `DailyView.tsx` itera sobre `record.gasControl.map(...)` del doc único del día seleccionado. Muestra datos stale del mismo array. Debería consumir el mismo helper semanal que `NewProductionRecord` para mostrar los 6 días reales desde cada doc.
+
+**Scope:**
+1. Fix `getWeeklyGasHistory` para leer `record.gasControl?.[idx]` donde `idx` es el índice del día en `DIAS_KEYS` (Lun=0, Mar=1, ..., Sáb=5).
+2. Refactor `DailyView` para consumir `getWeeklyGasHistory(date, allRecords)` y renderizar 6 filas (lun-sáb) sourced de cada doc de la semana.
+3. Test de regresión en `gasHistory.test.ts` con records de 6 entradas (modelo real), no de 1 entrada.
+
+**Aceptación:**
+- `getWeeklyGasHistory` retorna el valor de gas de cada día desde su propio doc (no desde `[0]`).
+- `DailyView` "Control de Gas Diario" muestra 6 filas: días con data real con chip+% y valor; días sin registro con "N/I" italic muted.
+- Día seleccionado (current day) en `DailyView` se distingue con label en bold (sin highlight de color — UX minimal).
+- Test nuevo en `gasHistory.test.ts` cubre el modelo real de 6 entradas y valida que cada día lea su propio índice.
+- `pnpm test:unit:run`, `pnpm ts:check`, `pnpm lint:check` pasan limpios.
+- NewProductionRecord se auto-arregla (ya consume el helper) — sin cambios adicionales.
+
+**Edge cases:**
+- Día seleccionado = domingo (no laboral): la tabla renderiza lun-sáb vacíos/`N/I` según data existente.
+- Semana sin registros: todas las filas en `N/I`, sin errores de render.
+- Week boundary (lun como primer día de semana, ISO): si la fecha cae en lun y no hay registros previos, la fila Lunes es editable en NewProductionRecord; DailyView muestra lo que haya.
+
+**Handoff:** `docs/handoff-v3.1.2-gas-history-fix.md`.
+
+**Estimación:** 1,5 horas (incluye TDD + refactor DailyView).
+
+**NO hacer:**
+- No migrar data histórica (los docs legacy con gasControl de 6 entradas se siguen leyendo OK tras el fix).
+- No cambiar `DIAS_KEYS` ni `DIAS_LABELS` (estables).
+- No extraer un componente compartido entre DailyView/NewProductionRecord (YAGNI por ahora).
+- No tocar `monthlyHelper.ts` ni `WeeklyProductionCard.tsx` (no relacionados).
+
+---
+
+_PRD v1.1 · 19-06-2026 · spec-driven, 4 fases, 22h estimadas_
+_v1.1 · 26-06-2026 · ítem 13 agregado (fix getWeeklyGasHistory + DailyView integration)_

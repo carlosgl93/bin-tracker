@@ -184,6 +184,165 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
         </Grid>
       </Paper>
 
+      {/* Estado de Bins */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        }}
+      >
+        <Box display="flex" alignItems="center" mb={2} justifyContent="space-between">
+          <Box display="flex" alignItems="center">
+            <WorkIcon sx={{ mr: 1 }} color="primary" />
+            <Typography variant="h6">Estado de Bins</Typography>
+          </Box>
+          <Typography
+            variant="h6"
+            sx={{ fontStyle: 'italic', fontWeight: 300, color: 'primary.main' }}
+          >
+            {KG_PER_BIN} kgs
+          </Typography>
+        </Box>
+        {/* Responsive container for Estado de Bins */}
+        {isMobile ? (
+          <Stack spacing={3}>
+            {record.binsStatus.map((bin) => (
+              <Box
+                display="flex"
+                flexDirection="row"
+                justifyContent={'space-between'}
+                alignItems="center"
+                key={bin.source}
+              >
+                <Typography color="text.secondary">{bin.source}:</Typography>
+                <Box textAlign="right">
+                  <Typography variant="h6">{bin.quantity}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((bin.quantity || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+            <Box
+              display="flex"
+              flexDirection="row"
+              justifyContent={'space-between'}
+              alignItems="center"
+            >
+              <Typography color="text.secondary">Bins Malos:</Typography>
+              <Box textAlign="right">
+                <Typography variant="h6">{record.binsMalfunction}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  {formatNumberES((record.binsMalfunction || 0) * KG_PER_BIN)}
+                </Typography>
+              </Box>
+            </Box>
+            <Stack spacing={2}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography>Total Existencia:</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  {formatNumberES((record.totalExistence || 0) * KG_PER_BIN)}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography>Total Procesados:</Typography>
+                <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  {formatNumberES((record.totalProcessed || 0) * KG_PER_BIN)}
+                </Typography>
+              </Box>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
+              >
+                <Typography>Total Final Proceso:</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((record.totalFinal || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Stack>
+          </Stack>
+        ) : (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={2}>
+                {record.binsStatus.map((bin) => (
+                  <Grid item xs={6} sm={3} key={bin.source}>
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                      <Typography variant="body1" color="text.secondary">
+                        {bin.source}:
+                      </Typography>
+                      <Typography variant="h6">{bin.quantity}</Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontStyle: 'italic' }}
+                      >
+                        {formatNumberES((bin.quantity || 0) * KG_PER_BIN)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
+                <Grid item xs={6} sm={3}>
+                  <Box display="flex" flexDirection="column" alignItems="center">
+                    <Typography variant="body1" color="text.secondary">
+                      Bins Malos:
+                    </Typography>
+                    <Typography variant="h6">{record.binsMalfunction}</Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: 'italic' }}
+                    >
+                      {formatNumberES((record.binsMalfunction || 0) * KG_PER_BIN)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Stack spacing={2}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography>Total Existencia:</Typography>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((record.totalExistence || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography>Total Procesados:</Typography>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((record.totalProcessed || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
+                >
+                  <Typography>Total Final Proceso:</Typography>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((record.totalFinal || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
+        )}
+      </Paper>
+
       {/* Tambores y Horarios */}
       <Paper
         variant="outlined"
@@ -347,144 +506,6 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
         </Grid>
       </Grid>
 
-      {/* Estado de Bins */}
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          borderRadius: 2,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-        }}
-      >
-        <Box display="flex" alignItems="center" mb={2} justifyContent="space-between">
-          <Box display="flex" alignItems="center">
-            <WorkIcon sx={{ mr: 1 }} color="primary" />
-            <Typography variant="h6">Estado de Bins</Typography>
-          </Box>
-          <Typography
-            variant="h5"
-            sx={{ fontStyle: 'italic', fontWeight: 300, color: 'primary.main' }}
-          >
-            {KG_PER_BIN}
-          </Typography>
-        </Box>
-        {/* Responsive container for Estado de Bins */}
-        {isMobile ? (
-          <Stack spacing={3}>
-            {record.binsStatus.map((bin) => (
-              <Box
-                display="flex"
-                flexDirection="row"
-                justifyContent={'space-between'}
-                alignItems="center"
-                key={bin.source}
-              >
-                <Typography color="text.secondary">{bin.source}:</Typography>
-                <Box textAlign="right">
-                  <Typography variant="h6">{bin.quantity}</Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {formatNumberES((bin.quantity || 0) * KG_PER_BIN)}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-            <Box
-              display="flex"
-              flexDirection="row"
-              justifyContent={'space-between'}
-              alignItems="center"
-            >
-              <Typography color="text.secondary">Bins Malos:</Typography>
-              <Box textAlign="right">
-                <Typography variant="h6">{record.binsMalfunction}</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  {formatNumberES((record.binsMalfunction || 0) * KG_PER_BIN)}
-                </Typography>
-              </Box>
-            </Box>
-            <Stack spacing={2}>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography>Total Existencia:</Typography>
-                <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
-              </Box>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography>Total Procesados:</Typography>
-                <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
-              </Box>
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
-              >
-                <Typography>Total Final Proceso:</Typography>
-                <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
-              </Box>
-            </Stack>
-          </Stack>
-        ) : (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={2}>
-                {record.binsStatus.map((bin) => (
-                  <Grid item xs={6} sm={3} key={bin.source}>
-                    <Box display="flex" flexDirection="column" alignItems="center">
-                      <Typography variant="body1" color="text.secondary">
-                        {bin.source}:
-                      </Typography>
-                      <Typography variant="h6">{bin.quantity}</Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ fontStyle: 'italic' }}
-                      >
-                        {formatNumberES((bin.quantity || 0) * KG_PER_BIN)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                ))}
-                <Grid item xs={6} sm={3}>
-                  <Box display="flex" flexDirection="column" alignItems="center">
-                    <Typography variant="body1" color="text.secondary">
-                      Bins Malos:
-                    </Typography>
-                    <Typography variant="h6">{record.binsMalfunction}</Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontStyle: 'italic' }}
-                    >
-                      {formatNumberES((record.binsMalfunction || 0) * KG_PER_BIN)}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Stack spacing={2}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography>Total Existencia:</Typography>
-                  <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography>Total Procesados:</Typography>
-                  <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
-                >
-                  <Typography>Total Final Proceso:</Typography>
-                  <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
-                </Box>
-              </Stack>
-            </Grid>
-          </Grid>
-        )}
-      </Paper>
       {/* Control de Gas Diario */}
       <Paper
         variant="outlined"

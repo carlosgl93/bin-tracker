@@ -351,9 +351,9 @@ export function WeeklyProductionCard({
             <Typography variant="body1" color="text.secondary">
               Kilogramos recepcionados
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            {/* <Typography variant="caption" color="text.secondary">
               Suma bins Chechito + Don Luis + Otros, * 700
-            </Typography>
+            </Typography> */}
             <Typography variant="h6" align="center">
               {formatNumberES(weekRecepcionadosKgs)}
             </Typography>
@@ -362,9 +362,9 @@ export function WeeklyProductionCard({
             <Typography variant="body1" color="text.secondary">
               Bins malos
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            {/* <Typography variant="caption" color="text.secondary">
               Suma binsMalfunction de la semana
-            </Typography>
+            </Typography> */}
             <Typography variant="h6" align="center">
               {formatNumberES(weekBinsMalos)}
             </Typography>
@@ -373,9 +373,9 @@ export function WeeklyProductionCard({
             <Typography variant="body1" color="text.secondary">
               % defectuosos
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            {/* <Typography variant="caption" color="text.secondary">
               binsMalfunction / (OK + malos) * 100
-            </Typography>
+            </Typography> */}
             <Typography variant="h6" align="center">
               {weekDefectuososPercent.toFixed(1)}%
             </Typography>
