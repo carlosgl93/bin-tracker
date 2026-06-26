@@ -24,9 +24,19 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
+import { useQuery } from '@tanstack/react-query';
+
+import { getAllProductionRecords } from '@/services/production/productionRecords';
 import { ProductionRecord } from '@/services/production/types';
 import { formatDate, formatNumberES } from '@/utils';
 import { KG_PER_BIN } from '@/utils/conversionFactors';
+import {
+  DIAS_KEYS,
+  DIAS_LABELS,
+  WeeklyGasHistory,
+  getCurrentDayKey,
+  getWeeklyGasHistory,
+} from '@/utils/gasHistory';
 
 interface DailyViewProps {
   record?: ProductionRecord | null;
@@ -41,6 +51,21 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
     if (!record) return 0;
     return record.drumProductionByHour.reduce((sum, hour) => sum + hour.count, 0);
   }, [record]);
+
+  // Weekly gas history (v3.1.2): fetch all records so we can show each day's
+  // gas from its own doc, not just the selected day's stale slot.
+  const { data: allRecords = [], isLoading: isLoadingAllRecords } = useQuery({
+    queryKey: ['allProductionRecords'],
+    queryFn: getAllProductionRecords,
+    refetchOnMount: true,
+  });
+
+  const gasHistory: WeeklyGasHistory = useMemo(
+    () => getWeeklyGasHistory(date, allRecords),
+    [date, allRecords],
+  );
+
+  const currentDayKey = useMemo(() => getCurrentDayKey(date), [date]);
 
   if (isLoading) {
     return (
@@ -476,31 +501,55 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
         </Box>
 
         <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Día</TableCell>
-                <TableCell align="center">Porcentaje</TableCell>
-                <TableCell align="right">Valor</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {record.gasControl.map((item) => (
-                <TableRow key={item.day}>
-                  <TableCell>{item.day}</TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={`${item.percentage}%`}
-                      size="small"
-                      color={item.percentage > 0 ? 'primary' : 'default'}
-                      variant={item.percentage > 0 ? 'filled' : 'outlined'}
-                    />
-                  </TableCell>
-                  <TableCell align="right">{item.value.toLocaleString()}</TableCell>
+          {isLoadingAllRecords ? (
+            <Box display="flex" justifyContent="center" py={2}>
+              <CircularProgress size={20} />
+            </Box>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Día</TableCell>
+                  <TableCell align="center">Porcentaje</TableCell>
+                  <TableCell align="right">Valor</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {[...DIAS_KEYS].map((key) => {
+                  const entry = gasHistory[key];
+                  const isCurrent = key === currentDayKey;
+                  return (
+                    <TableRow key={key}>
+                      <TableCell sx={{ fontWeight: isCurrent ? 600 : 'normal' }}>
+                        {DIAS_LABELS[key]}
+                      </TableCell>
+                      <TableCell align="center">
+                        {entry.hasData ? (
+                          <Chip
+                            label={`${entry.percentage}%`}
+                            size="small"
+                            color={Number(entry.percentage) > 0 ? 'primary' : 'default'}
+                            variant={Number(entry.percentage) > 0 ? 'filled' : 'outlined'}
+                          />
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            color="text.disabled"
+                            sx={{ fontStyle: 'italic' }}
+                          >
+                            N/I
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        {entry.hasData ? entry.value.toLocaleString() : ''}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </TableContainer>
       </Paper>
       {/* Comentarios */}

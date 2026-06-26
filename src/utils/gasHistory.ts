@@ -56,7 +56,7 @@ export function getWeeklyGasHistory(
     const dayKey = DIAS_KEYS[idx];
     const dayStr = format(day, 'yyyy-MM-dd');
     const record = records.find((r) => r.date === dayStr);
-    const firstGas = record?.gasControl?.[0];
+    const firstGas = record?.gasControl?.[idx];
 
     if (record && firstGas) {
       result[dayKey] = {
