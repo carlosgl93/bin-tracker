@@ -33,9 +33,8 @@ function extractLastGas(record: ProductionRecord | null | undefined): {
   }
   const entry = matches[matches.length - 1];
   if (!entry) return { value: null, percentage: null };
-  const entryValue = entry.value != null && entry.value !== '' ? Number(entry.value) : null;
-  const entryPct =
-    entry.percentage != null && entry.percentage !== '' ? Number(entry.percentage) : null;
+  const entryValue = entry.value != null ? Number(entry.value) : null;
+  const entryPct = entry.percentage != null ? Number(entry.percentage) : null;
   const hasData = (entryValue != null && entryValue > 0) || (entryPct != null && entryPct > 0);
   return hasData ? { value: entryValue, percentage: entryPct } : { value: null, percentage: null };
 }
