@@ -52,6 +52,7 @@ const horas = [
   '17:00-18:00',
   '18:00-19:00',
   '20:00-21:00',
+  '21:00-22:00',
 ];
 
 const bins: { key: BinKey; label: string }[] = [
@@ -572,7 +573,7 @@ function NewProductionRecord() {
           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2">Tambores y Horarios</Typography>
             <Typography variant="body2" mb={1}>
-              Ingresa la cantidad por cada hora (09:00 - 21:00)
+              Ingresa la cantidad por cada hora (09:00 - 22:00)
             </Typography>
             <Grid container spacing={2}>
               {horas.map((h, i) => (

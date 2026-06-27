@@ -242,17 +242,21 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
             <Stack spacing={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Total Existencia:</Typography>
-                <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  {formatNumberES((record.totalExistence || 0) * KG_PER_BIN)}
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((record.totalExistence || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography>Total Procesados:</Typography>
-                <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  {formatNumberES((record.totalProcessed || 0) * KG_PER_BIN)}
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {formatNumberES((record.totalProcessed || 0) * KG_PER_BIN)}
+                  </Typography>
+                </Box>
               </Box>
               <Box
                 display="flex"
@@ -313,17 +317,33 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
               <Stack spacing={2}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography>Total Existencia:</Typography>
-                  <Typography fontWeight="bold">{formatNumberES(record.totalExistence)}</Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {formatNumberES((record.totalExistence || 0) * KG_PER_BIN)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography fontWeight="bold">
+                      {formatNumberES(record.totalExistence)}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: 'italic' }}
+                    >
+                      {formatNumberES((record.totalExistence || 0) * KG_PER_BIN)}
+                    </Typography>
+                  </Box>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography>Total Procesados:</Typography>
-                  <Typography fontWeight="bold">{formatNumberES(record.totalProcessed)}</Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {formatNumberES((record.totalProcessed || 0) * KG_PER_BIN)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography fontWeight="bold">
+                      {formatNumberES(record.totalProcessed)}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: 'italic' }}
+                    >
+                      {formatNumberES((record.totalProcessed || 0) * KG_PER_BIN)}
+                    </Typography>
+                  </Box>
                 </Box>
                 <Box
                   display="flex"
@@ -332,10 +352,16 @@ function DailyView({ record, date, isLoading }: DailyViewProps) {
                   sx={{ bgcolor: 'rgba(232, 245, 253, 0.6)', p: 1, borderRadius: 1 }}
                 >
                   <Typography>Total Final Proceso:</Typography>
-                  <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {formatNumberES((record.totalFinal || 0) * KG_PER_BIN)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography fontWeight="bold">{formatNumberES(record.totalFinal)}</Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: 'italic' }}
+                    >
+                      {formatNumberES((record.totalFinal || 0) * KG_PER_BIN)}
+                    </Typography>
+                  </Box>
                 </Box>
               </Stack>
             </Grid>
